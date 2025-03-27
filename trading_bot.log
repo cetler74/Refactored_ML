@@ -1,0 +1,43 @@
+2025-03-26 17:10:54,620 - __main__ - INFO - Starting ML-Powered Trading Bot
+2025-03-26 17:10:54,628 - app.config.settings - INFO - Model save path set to: ./models
+2025-03-26 17:10:54,628 - app.config.settings - INFO - Using default timeframes: ['1m', '5m', '15m', '1h']
+2025-03-26 17:10:54,628 - app.config.settings - INFO - Binance config initialized from environment variables
+2025-03-26 17:10:54,628 - app.config.settings - INFO - Crypto.com config initialized from environment variables
+2025-03-26 17:10:54,628 - app.config.settings - INFO - Loaded Binance credentials: API Key: Found, Secret Key: Found
+2025-03-26 17:10:54,628 - app.config.settings - INFO - Database URL from environment: postgresql+asyncpg://carloslarramba@localhost:5432/trading_bot
+2025-03-26 17:12:04,137 - __main__ - INFO - Starting ML-Powered Trading Bot
+2025-03-26 17:12:04,145 - app.config.settings - INFO - Model save path set to: ./models
+2025-03-26 17:12:04,145 - app.config.settings - INFO - Using default timeframes: ['1m', '5m', '15m', '1h']
+2025-03-26 17:12:04,145 - app.config.settings - INFO - Binance config initialized from environment variables
+2025-03-26 17:12:04,145 - app.config.settings - INFO - Crypto.com config initialized from environment variables
+2025-03-26 17:12:04,145 - app.config.settings - INFO - Loaded Binance credentials: API Key: Found, Secret Key: Found
+2025-03-26 17:12:04,145 - app.config.settings - INFO - Database URL from environment: postgresql+asyncpg://carloslarramba@localhost:5432/trading_bot
+2025-03-26 17:12:17,469 - __main__ - INFO - Starting ML-Powered Trading Bot
+2025-03-26 17:12:17,477 - app.config.settings - INFO - Model save path set to: ./models
+2025-03-26 17:12:17,477 - app.config.settings - INFO - Using default timeframes: ['1m', '5m', '15m', '1h']
+2025-03-26 17:12:17,477 - app.config.settings - INFO - Binance config initialized from environment variables
+2025-03-26 17:12:17,477 - app.config.settings - INFO - Crypto.com config initialized from environment variables
+2025-03-26 17:12:17,477 - app.config.settings - INFO - Loaded Binance credentials: API Key: Found, Secret Key: Found
+2025-03-26 17:12:17,477 - app.config.settings - INFO - Database URL from environment: postgresql+asyncpg://carloslarramba@localhost:5432/trading_bot
+2025-03-26 17:12:43,637 - __main__ - INFO - Starting ML-Powered Trading Bot
+2025-03-26 17:12:43,645 - app.config.settings - INFO - Model save path set to: ./models
+2025-03-26 17:12:43,645 - app.config.settings - INFO - Using default timeframes: ['1m', '5m', '15m', '1h']
+2025-03-26 17:12:43,645 - app.config.settings - INFO - Binance config initialized from environment variables
+2025-03-26 17:12:43,645 - app.config.settings - INFO - Crypto.com config initialized from environment variables
+2025-03-26 17:12:43,645 - app.config.settings - INFO - Loaded Binance credentials: API Key: Found, Secret Key: Found
+2025-03-26 17:12:43,645 - app.config.settings - INFO - Database URL from environment: postgresql+asyncpg://carloslarramba@localhost:5432/trading_bot
+2025-03-26 17:12:43,645 - __main__ - INFO - Application mode: simulation
+2025-03-26 17:12:43,646 - app.utils.notification_system - INFO - Notification system initialized with channels: console
+2025-03-26 17:12:43,646 - app.core.orchestrator - INFO - Orchestrator initialized in simulation mode
+2025-03-26 17:12:43,648 - __main__ - INFO - Trading bot shutdown complete
+2025-03-26 17:13:03,239 - __main__ - INFO - Starting ML-Powered Trading Bot
+2025-03-26 17:13:03,247 - app.config.settings - INFO - Model save path set to: ./models
+2025-03-26 17:13:03,247 - app.config.settings - INFO - Using default timeframes: ['1m', '5m', '15m', '1h']
+2025-03-26 17:13:03,247 - app.config.settings - INFO - Binance config initialized from environment variables
+2025-03-26 17:13:03,247 - app.config.settings - INFO - Crypto.com config initialized from environment variables
+2025-03-26 17:13:03,247 - app.config.settings - INFO - Loaded Binance credentials: API Key: Found, Secret Key: Found
+2025-03-26 17:13:03,247 - app.config.settings - INFO - Database URL from environment: postgresql+asyncpg://carloslarramba@localhost:5432/trading_bot
+2025-03-26 17:13:03,247 - __main__ - INFO - Application mode: simulation
+2025-03-26 17:13:03,247 - app.utils.notification_system - INFO - Notification system initialized with channels: console
+2025-03-26 17:13:03,247 - app.core.orchestrator - INFO - Orchestrator initialized in simulation mode
+2025-03-26 17:13:03,248 - __main__ - INFO - Trading bot shutdown complete

@@ -1,0 +1,95 @@
+/Users/carloslarramba/Documents/Projects2025/Refactored_ML/trading_bot_env/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2025-03-26 17:13:23,298 - __main__ - INFO - Starting ML-Powered Trading Bot
+2025-03-26 17:13:23,306 - app.config.settings - INFO - Model save path set to: ./models
+2025-03-26 17:13:23,306 - app.config.settings - INFO - Using default timeframes: ['1m', '5m', '15m', '1h']
+2025-03-26 17:13:23,306 - app.config.settings - INFO - Binance config initialized from environment variables
+2025-03-26 17:13:23,306 - app.config.settings - INFO - Crypto.com config initialized from environment variables
+2025-03-26 17:13:23,306 - app.config.settings - INFO - Loaded Binance credentials: API Key: Found, Secret Key: Found
+2025-03-26 17:13:23,306 - app.config.settings - INFO - Database URL from environment: postgresql+asyncpg://carloslarramba@localhost:5432/trading_bot
+2025-03-26 17:13:23,306 - __main__ - INFO - Application mode: simulation
+2025-03-26 17:13:23,306 - app.utils.notification_system - INFO - Notification system initialized with channels: console
+2025-03-26 17:13:23,306 - app.core.orchestrator - INFO - Orchestrator initialized in simulation mode
+2025-03-26 17:13:23,306 - app.core.orchestrator - INFO - Starting trading bot in simulation mode
+2025-03-26 17:13:23,306 - app.core.orchestrator - INFO - Initializing trading bot modules
+2025-03-26 17:13:23,308 - app.core.orchestrator - INFO - Scheduler initialized
+2025-03-26 17:13:23,308 - app.core.orchestrator - INFO - Initializing database connection
+2025-03-26 17:13:23,308 - app.core.orchestrator - WARNING - Database initialization failed: 'Settings' object has no attribute 'startswith'. Using placeholder.
+2025-03-26 17:13:23,308 - app.core.orchestrator - INFO - Initializing exchange connections
+2025-03-26 17:13:23,308 - app.exchange.binance_direct - INFO - Initialized BinanceDirectAPI in sandbox mode
+2025-03-26 17:13:23,308 - app.exchange.manager - INFO - Exchange manager initialized (sandbox: True)
+2025-03-26 17:13:23,313 - app.exchange.manager - INFO - Exchange binance initialized with USDC as quote currency
+2025-03-26 17:13:23,314 - app.exchange.manager - INFO - Initialized Binance exchange in simulation mode with USDC as quote currency
+2025-03-26 17:13:23,314 - app.exchange.binance_direct - INFO - Initialized BinanceDirectAPI in sandbox mode
+2025-03-26 17:13:23,319 - app.exchange.manager - INFO - Initialized Binance exchange in simulation mode with USDC as quote currency
+2025-03-26 17:13:23,319 - app.exchange.manager - INFO - Binance exchange initialized in spot mode using real API
+2025-03-26 17:13:23,321 - app.exchange.manager - INFO - Crypto.com exchange initialized in spot mode
+2025-03-26 17:13:25,851 - app.exchange.manager - INFO - Loaded markets for binance
+2025-03-26 17:13:26,412 - app.exchange.manager - INFO - Loaded markets for cryptocom
+2025-03-26 17:13:26,412 - app.core.orchestrator - INFO - Initialized 2 exchange connections
+2025-03-26 17:13:26,413 - app.core.orchestrator - INFO - Initializing balance manager
+2025-03-26 17:13:26,413 - app.utils.balance_manager - INFO - Balance manager initialized in simulation mode
+2025-03-26 17:13:26,413 - app.utils.balance_manager - INFO - Initialized simulated balance: 5000.0 USDC
+2025-03-26 17:13:26,413 - app.core.orchestrator - INFO - Balance manager initialized
+2025-03-26 17:13:26,413 - app.core.orchestrator - INFO - Initializing trading pair selector
+2025-03-26 17:13:26,413 - app.core.pair_selector - INFO - Selecting trading pairs...
+2025-03-26 17:13:26,413 - app.exchange.manager - INFO - Using quote currency: USDC
+2025-03-26 17:13:27,795 - app.exchange.manager - INFO - Found 190 active USDC pairs on binance
+2025-03-26 17:13:28,188 - app.exchange.manager - WARNING - No ticker data found for 1000PEPEUSDC
+2025-03-26 17:13:28,188 - app.exchange.manager - WARNING - No ticker data found for 1000SHIBUSDC
+2025-03-26 17:13:28,188 - app.exchange.manager - WARNING - No ticker data found for 1000BONKUSDC
+2025-03-26 17:13:28,188 - app.exchange.manager - WARNING - No ticker data found for IPUSDC
+2025-03-26 17:13:28,189 - app.core.pair_selector - INFO - Selected 5 trading pairs: ETH/USDC, BTC/USDC, SOL/USDC, XRP/USDC, SUI/USDC
+2025-03-26 17:13:28,189 - app.core.orchestrator - INFO - Trading pair selector initialized with 5 pairs
+2025-03-26 17:13:28,189 - app.core.orchestrator - INFO - Initializing ML module
+2025-03-26 17:13:31,776 - app.ml.online_learning - INFO - Initialized online learner with update interval: 15 minutes
+2025-03-26 17:13:31,776 - app.ml.model - INFO - ML module initialized
+2025-03-26 17:13:31,776 - app.core.orchestrator - INFO - ML module initialized
+2025-03-26 17:13:31,776 - app.core.orchestrator - INFO - Initializing technical analysis module
+2025-03-26 17:13:31,844 - app.ta.indicators - INFO - Technical Analysis module initialized (GPU: False, TA-Lib: True)
+2025-03-26 17:13:31,844 - app.core.orchestrator - INFO - Technical analysis module initialized
+2025-03-26 17:13:31,844 - app.core.orchestrator - INFO - Initializing strategy module
+2025-03-26 17:13:31,850 - app.strategies.risk_manager - INFO - Advanced Risk Manager initialized
+2025-03-26 17:13:31,851 - app.strategies.timeframe_selector - INFO - Initialized DynamicTimeframeSelector with timeframes: ['1m', '5m', '15m', '1h']
+2025-03-26 17:13:31,851 - app.strategies.strategy - INFO - Initialized MA_Crossover_9_21 strategy
+2025-03-26 17:13:31,851 - app.strategies.strategy - INFO - Initialized RSI_14 strategy
+2025-03-26 17:13:31,851 - app.strategies.strategy - INFO - Initialized ML_Strategy strategy with confidence threshold 0.7
+2025-03-26 17:13:31,851 - app.strategies.strategy - INFO - Strategy module initialized with 3 strategies
+2025-03-26 17:13:31,851 - app.core.orchestrator - INFO - Strategy module initialized
+2025-03-26 17:13:31,851 - app.core.orchestrator - ERROR - Error loading historical data: 'PlaceholderDBManager' object has no attribute 'balance_repository'
+2025-03-26 17:13:31,851 - app.core.orchestrator - INFO - All trading bot modules initialized successfully
+2025-03-26 17:13:31,851 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 17:13:31,851 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 17:13:31,851 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 17:13:31,851 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 17:13:31,851 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 17:13:31,851 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 17:13:31,851 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-03-26 17:13:31,851 - app.core.orchestrator - INFO - All jobs scheduled successfully
+2025-03-26 17:13:31,852 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.collect_market_data" to job store "default"
+2025-03-26 17:13:31,852 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.generate_signals" to job store "default"
+2025-03-26 17:13:31,852 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.update_trading_pairs" to job store "default"
+2025-03-26 17:13:31,852 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.train_ml_models" to job store "default"
+2025-03-26 17:13:31,852 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.make_predictions" to job store "default"
+2025-03-26 17:13:31,852 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.update_position_prices" to job store "default"
+2025-03-26 17:13:31,852 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.update_heartbeat" to job store "default"
+2025-03-26 17:13:31,852 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-26 17:13:31,852 - app.core.orchestrator - INFO - Trading bot started successfully
+2025-03-26 17:13:31,852 - __main__ - ERROR - Error occurred in asyncio loop: This event loop is already running
+Traceback (most recent call last):
+  File "/Users/carloslarramba/Documents/Projects2025/Refactored_ML/app/main.py", line 56, in main
+    asyncio.run(async_main())
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/base_events.py", line 642, in run_until_complete
+    return future.result()
+  File "/Users/carloslarramba/Documents/Projects2025/Refactored_ML/app/main.py", line 50, in async_main
+    await orchestrator.shutdown()
+  File "/Users/carloslarramba/Documents/Projects2025/Refactored_ML/app/core/orchestrator.py", line 1553, in shutdown
+    loop.run_until_complete(self.shutdown_async())
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/base_events.py", line 618, in run_until_complete
+    self._check_running()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/asyncio/base_events.py", line 578, in _check_running
+    raise RuntimeError('This event loop is already running')
+RuntimeError: This event loop is already running
+sys:1: RuntimeWarning: coroutine 'BotOrchestrator.shutdown_async' was never awaited

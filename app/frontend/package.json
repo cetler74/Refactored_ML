@@ -1,0 +1,13 @@
+{
+  "name": "trading-bot-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Trading Bot",
+  "scripts": {
+    "start": "cd react-app && npm start",
+    "build": "cd react-app && npm run build",
+    "test": "cd react-app && npm test",
+    "eject": "cd react-app && npm run eject"
+  },
+  "author": "",
+  "license": "MIT"
+} 

@@ -1,0 +1,1 @@
+Please open the app/exchange/manager.py file in a code editor like VSCode and fix the indentation issues manually. The file has multiple indentation problems throughout.

@@ -1,0 +1,72 @@
+# Core dependencies
+ccxt>=4.1.13
+pandas>=2.1.4
+numpy>=1.24.3
+python-dotenv>=1.0.0
+pydantic>=2.5.2
+pydantic-settings>=2.1.0
+SQLAlchemy>=2.0.23
+psycopg2-binary>=2.9.9
+psutil>=7.0.0
+alembic>=1.12.1
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.6
+fastapi>=0.104.1
+uvicorn>=0.24.0
+urllib3<2.0.0
+plotly>=5.18.0
+ta>=0.10.2
+scikit-learn>=1.3.2
+tensorflow>=2.15.0
+torch>=2.1.1
+transformers>=4.35.2
+sentence-transformers>=2.2.2
+nltk>=3.8.1
+spacy>=3.7.2
+textblob>=0.17.1
+vaderSentiment>=3.3.2
+newsapi-python>=0.2.7
+yfinance>=0.2.31
+alpha_vantage>=2.3.1
+polygon-api-client>=1.13.3
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
+pytest-cov>=4.1.0
+black==23.10.1
+isort>=5.12.0
+flake8==6.1.0
+mypy==1.6.1
+
+# Database and caching
+redis>=5.0.1
+asyncpg>=0.28.0
+
+# Exchange connectivity
+aiohttp>=3.8.6
+
+# Technical analysis
+ta-lib>=0.4.28
+pandas-ta>=0.3.14b0
+
+# Machine learning
+xgboost>=2.0.1
+pytorch-lightning>=2.1.0
+optuna>=3.4.0
+mlflow>=2.8.0
+
+# Task scheduling and queueing
+apscheduler>=3.10.4
+celery>=5.3.4
+
+# Configuration
+hydra-core==1.3.2
+pyyaml==6.0.1
+jsonschema==4.19.1
+
+# Development tools
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.10.1
+flake8==6.1.0
+mypy==1.6.1 

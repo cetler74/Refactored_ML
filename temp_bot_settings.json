@@ -1,0 +1,13 @@
+{
+  "max_trading_pairs": 8,
+  "trading_strategy": "MACD_RSI",
+  "risk_level": "medium",
+  "quote_currency": "USDC",
+  "trade_amount_per_position": 100,
+  "use_stop_loss": true,
+  "stop_loss_percentage": 5,
+  "take_profit_percentage": 10,
+  "trading_timeframe": "1h",
+  "simulation_mode": true,
+  "max_positions": 7
+}

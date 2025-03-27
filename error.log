@@ -1,0 +1,433 @@
+2025-03-27 12:06:37,945 - __main__ - INFO - Replaced original StrategyModule with CustomTAStrategyModule for market-based signal generation
+fatal: bad revision 'HEAD'
+/Users/carloslarramba/Documents/Projects2025/Refactored_ML/trading_bot_env/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2025-03-27 12:06:38,342 - __main__ - INFO - Applied patch to BotOrchestrator.generate_signals to use trade_type instead of side/direction
+2025-03-27 12:06:38,342 - __main__ - INFO - Applied patch to BotOrchestrator.schedule_jobs to use patched_generate_signals
+2025-03-27 12:06:38,342 - __main__ - INFO - Starting ML-Powered Trading Bot
+2025-03-27 12:06:38,350 - app.config.settings - INFO - Model save path set to: ./models
+2025-03-27 12:06:38,350 - app.config.settings - INFO - Using default timeframes: ['1m', '5m', '15m', '1h']
+2025-03-27 12:06:38,350 - app.config.settings - INFO - Binance config initialized from environment variables
+2025-03-27 12:06:38,350 - app.config.settings - INFO - Crypto.com config initialized from environment variables
+2025-03-27 12:06:38,350 - app.config.settings - INFO - Loaded Binance credentials: API Key: Found, Secret Key: Found
+2025-03-27 12:06:38,350 - app.config.settings - INFO - Database URL from environment: postgresql+asyncpg://carloslarramba@localhost:5432/trading_bot
+2025-03-27 12:06:38,350 - __main__ - INFO - Application mode: simulation
+2025-03-27 12:06:38,350 - app.utils.notification_system - INFO - Notification system initialized with channels: console
+2025-03-27 12:06:38,350 - app.core.orchestrator - INFO - Orchestrator initialized in simulation mode
+2025-03-27 12:06:38,350 - app.core.orchestrator - INFO - Starting trading bot in simulation mode
+2025-03-27 12:06:38,350 - app.core.orchestrator - INFO - Initializing trading bot modules...
+2025-03-27 12:06:38,350 - app.core.orchestrator - INFO - Initializing scheduler
+2025-03-27 12:06:38,352 - app.core.orchestrator - INFO - Scheduler initialized successfully
+2025-03-27 12:06:38,352 - apscheduler.scheduler - INFO - Scheduler started
+2025-03-27 12:06:38,352 - app.core.orchestrator - INFO - Scheduler started successfully
+2025-03-27 12:06:38,352 - app.core.orchestrator - INFO - Initializing exchange manager
+2025-03-27 12:06:38,352 - app.exchange.binance_direct - INFO - Initialized BinanceDirectAPI in sandbox mode
+2025-03-27 12:06:38,352 - app.exchange.manager - INFO - Exchange manager initialized (sandbox: True)
+2025-03-27 12:06:38,357 - app.exchange.manager - INFO - Exchange binance initialized with USDC as quote currency
+2025-03-27 12:06:38,357 - app.exchange.manager - INFO - Initialized Binance exchange in simulation mode with USDC as quote currency
+2025-03-27 12:06:38,357 - app.exchange.binance_direct - INFO - Initialized BinanceDirectAPI in sandbox mode
+2025-03-27 12:06:38,361 - app.exchange.manager - INFO - Initialized Binance exchange in simulation mode with USDC as quote currency
+2025-03-27 12:06:38,361 - app.exchange.manager - INFO - Binance exchange initialized in spot mode using real API
+2025-03-27 12:06:38,362 - app.exchange.manager - INFO - Crypto.com exchange initialized in spot mode
+2025-03-27 12:06:40,983 - app.exchange.manager - INFO - Loaded markets for binance
+2025-03-27 12:06:41,704 - app.exchange.manager - INFO - Loaded markets for cryptocom
+2025-03-27 12:06:41,704 - app.core.orchestrator - INFO - Exchange manager initialized successfully
+2025-03-27 12:06:41,704 - app.core.orchestrator - INFO - Initializing database manager
+2025-03-27 12:06:41,704 - app.database.manager - INFO - Database manager initialized with path: data/trading_bot.db
+2025-03-27 12:06:41,705 - app.database.manager - INFO - Initializing database with data/trading_bot.db
+2025-03-27 12:06:41,705 - app.database.manager - INFO - Using SQLite database at: sqlite+aiosqlite:///data/trading_bot.db
+2025-03-27 12:06:41,705 - app.database.manager - INFO - Using aiosqlite driver for SQLite
+2025-03-27 12:06:41,712 - app.database.manager - INFO - Database connection successful
+2025-03-27 12:06:41,712 - app.database.manager - INFO - Using existing database structure (tables not created)
+2025-03-27 12:06:41,712 - app.core.orchestrator - INFO - Database manager initialized successfully
+2025-03-27 12:06:41,712 - app.core.orchestrator - INFO - Initializing trading pair selector
+2025-03-27 12:06:41,712 - app.core.orchestrator - INFO - Trading pair selector initialized successfully
+2025-03-27 12:06:41,712 - app.core.orchestrator - INFO - Initializing technical analysis module
+2025-03-27 12:06:41,976 - app.ta.indicators - INFO - Technical Analysis module initialized (GPU: False, TA-Lib: True)
+2025-03-27 12:06:41,976 - app.core.orchestrator - INFO - Technical analysis module initialized successfully
+2025-03-27 12:06:41,976 - app.core.orchestrator - INFO - Initializing machine learning module
+2025-03-27 12:06:45,016 - app.ml.online_learning - INFO - Initialized online learner with update interval: 15 minutes
+2025-03-27 12:06:45,016 - app.ml.model - INFO - ML module initialized
+2025-03-27 12:06:45,017 - app.core.orchestrator - INFO - Machine learning module initialized successfully
+2025-03-27 12:06:45,017 - app.core.orchestrator - INFO - Initializing strategy module
+2025-03-27 12:06:45,017 - __main__ - INFO - Initialized CustomTAStrategyModule for market-based signal generation
+2025-03-27 12:06:45,017 - app.core.orchestrator - INFO - Strategy module initialized successfully
+2025-03-27 12:06:45,017 - app.database.manager - INFO - Database tables initialized
+2025-03-27 12:06:45,017 - app.database.manager - INFO - Database connection established
+2025-03-27 12:06:45,018 - app.core.orchestrator - INFO - Historical data loaded successfully
+2025-03-27 12:06:45,018 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.collect_market_data" to job store "default"
+2025-03-27 12:06:45,018 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.patched_generate_signals" to job store "default"
+2025-03-27 12:06:45,018 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.update_trading_pairs" to job store "default"
+2025-03-27 12:06:45,019 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.train_ml_models" to job store "default"
+2025-03-27 12:06:45,019 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.make_predictions" to job store "default"
+2025-03-27 12:06:45,019 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.update_position_prices" to job store "default"
+2025-03-27 12:06:45,019 - apscheduler.scheduler - INFO - Added job "BotOrchestrator.update_heartbeat" to job store "default"
+2025-03-27 12:06:45,019 - app.core.orchestrator - INFO - All jobs scheduled successfully
+2025-03-27 12:06:45,019 - app.core.orchestrator - INFO - Jobs scheduled successfully
+2025-03-27 12:06:45,019 - app.core.orchestrator - INFO - All trading bot modules initialized successfully
+2025-03-27 12:06:45,019 - app.core.orchestrator - INFO - All jobs scheduled successfully
+2025-03-27 12:06:45,019 - app.core.orchestrator - INFO - Trading bot started successfully
+2025-03-27 12:06:45,019 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:07:15,021 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:07:45 WET)" (scheduled at 2025-03-27 12:07:15.019183+00:00)
+2025-03-27 12:07:15,022 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:07:15,022 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:07:45 WET)" executed successfully
+2025-03-27 12:07:45,019 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:08:15 WET)" (scheduled at 2025-03-27 12:07:45.019183+00:00)
+2025-03-27 12:07:45,019 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:08:45 WET)" (scheduled at 2025-03-27 12:07:45.018573+00:00)
+2025-03-27 12:07:45,020 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:07:45,020 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:07:45,020 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:08:15 WET)" executed successfully
+2025-03-27 12:07:45,020 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:07:45,021 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:07:45,021 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:08:45 WET)" (scheduled at 2025-03-27 12:07:45.018727+00:00)
+2025-03-27 12:07:45,021 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:07:45,021 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:07:45,021 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:07:45,021 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:08:45 WET)" (scheduled at 2025-03-27 12:07:45.019127+00:00)
+2025-03-27 12:07:45,021 - app.core.orchestrator - WARNING - Balance manager not initialized, cannot update positions
+2025-03-27 12:07:45,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:08:45 WET)" executed successfully
+2025-03-27 12:07:45,504 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:07:45,505 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:07:45,505 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'BCH/USDC']
+2025-03-27 12:07:45,505 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:07:45,505 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:07:46,181 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:07:46,182 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:07:46,182 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'BCH/USDC']
+2025-03-27 12:07:46,182 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:07:46,182 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:07:52,649 - app.core.orchestrator - INFO - Calling strategy_module.generate_signals
+2025-03-27 12:07:52,650 - __main__ - INFO - CustomTAStrategyModule generate_signals called with market data
+2025-03-27 12:07:52,650 - __main__ - INFO - Analyzing pair: ETH/USDC
+2025-03-27 12:07:52,650 - __main__ - WARNING - No OHLCV data for ETH/USDC, skipping
+2025-03-27 12:07:52,650 - __main__ - INFO - Analyzing pair: SOL/USDC
+2025-03-27 12:07:52,650 - __main__ - WARNING - No OHLCV data for SOL/USDC, skipping
+2025-03-27 12:07:52,650 - __main__ - INFO - Analyzing pair: BTC/USDC
+2025-03-27 12:07:52,650 - __main__ - WARNING - No OHLCV data for BTC/USDC, skipping
+2025-03-27 12:07:52,650 - __main__ - INFO - Analyzing pair: XRP/USDC
+2025-03-27 12:07:52,650 - __main__ - WARNING - No OHLCV data for XRP/USDC, skipping
+2025-03-27 12:07:52,650 - __main__ - INFO - Analyzing pair: FDUSD/USDC
+2025-03-27 12:07:52,650 - __main__ - WARNING - No OHLCV data for FDUSD/USDC, skipping
+2025-03-27 12:07:52,650 - __main__ - INFO - CustomTAStrategyModule - generated 0 signals based on technical analysis
+2025-03-27 12:07:52,651 - app.core.orchestrator - INFO - Received 0 signals from strategy module
+2025-03-27 12:07:52,651 - app.core.orchestrator - INFO - No trading signals generated
+2025-03-27 12:07:52,652 - apscheduler.executors.default - INFO - Job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:08:45 WET)" executed successfully
+2025-03-27 12:07:52,652 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:07:53,069 - apscheduler.executors.default - INFO - Job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:08:45 WET)" executed successfully
+2025-03-27 12:08:15,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:08:45 WET)" (scheduled at 2025-03-27 12:08:15.019183+00:00)
+2025-03-27 12:08:15,020 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:08:15,020 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:08:45 WET)" executed successfully
+2025-03-27 12:08:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:09:15 WET)" (scheduled at 2025-03-27 12:08:45.019183+00:00)
+2025-03-27 12:08:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:09:45 WET)" (scheduled at 2025-03-27 12:08:45.018573+00:00)
+2025-03-27 12:08:45,021 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:08:45,021 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:08:45,021 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:08:45,021 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:08:45,021 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:09:45 WET)" (scheduled at 2025-03-27 12:08:45.018727+00:00)
+2025-03-27 12:08:45,021 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:08:45,021 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:08:45,021 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:08:45,022 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:09:45 WET)" (scheduled at 2025-03-27 12:08:45.019127+00:00)
+2025-03-27 12:08:45,022 - app.core.orchestrator - WARNING - Balance manager not initialized, cannot update positions
+2025-03-27 12:08:45,022 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:09:45 WET)" executed successfully
+2025-03-27 12:08:45,022 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:09:15 WET)" executed successfully
+2025-03-27 12:08:45,489 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:08:45,490 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:08:45,490 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'BCH/USDC']
+2025-03-27 12:08:45,490 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:08:45,490 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:08:46,289 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:08:46,290 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:08:46,290 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'BCH/USDC']
+2025-03-27 12:08:46,290 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:08:46,290 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:08:53,231 - apscheduler.executors.default - INFO - Job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:09:45 WET)" executed successfully
+2025-03-27 12:08:53,251 - app.core.orchestrator - INFO - Calling strategy_module.generate_signals
+2025-03-27 12:08:53,251 - __main__ - INFO - CustomTAStrategyModule generate_signals called with market data
+2025-03-27 12:08:53,251 - __main__ - INFO - Analyzing pair: ETH/USDC
+2025-03-27 12:08:53,251 - __main__ - WARNING - No OHLCV data for ETH/USDC, skipping
+2025-03-27 12:08:53,251 - __main__ - INFO - Analyzing pair: SOL/USDC
+2025-03-27 12:08:53,251 - __main__ - WARNING - No OHLCV data for SOL/USDC, skipping
+2025-03-27 12:08:53,251 - __main__ - INFO - Analyzing pair: BTC/USDC
+2025-03-27 12:08:53,251 - __main__ - WARNING - No OHLCV data for BTC/USDC, skipping
+2025-03-27 12:08:53,251 - __main__ - INFO - Analyzing pair: XRP/USDC
+2025-03-27 12:08:53,251 - __main__ - WARNING - No OHLCV data for XRP/USDC, skipping
+2025-03-27 12:08:53,251 - __main__ - INFO - Analyzing pair: FDUSD/USDC
+2025-03-27 12:08:53,251 - __main__ - WARNING - No OHLCV data for FDUSD/USDC, skipping
+2025-03-27 12:08:53,251 - __main__ - INFO - CustomTAStrategyModule - generated 0 signals based on technical analysis
+2025-03-27 12:08:53,251 - app.core.orchestrator - INFO - Received 0 signals from strategy module
+2025-03-27 12:08:53,251 - app.core.orchestrator - INFO - No trading signals generated
+2025-03-27 12:08:53,252 - apscheduler.executors.default - INFO - Job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:09:45 WET)" executed successfully
+2025-03-27 12:08:53,252 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:09:15,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:09:45 WET)" (scheduled at 2025-03-27 12:09:15.019183+00:00)
+2025-03-27 12:09:15,020 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:09:15,020 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:09:45 WET)" executed successfully
+2025-03-27 12:09:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:10:15 WET)" (scheduled at 2025-03-27 12:09:45.019183+00:00)
+2025-03-27 12:09:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:10:45 WET)" (scheduled at 2025-03-27 12:09:45.018573+00:00)
+2025-03-27 12:09:45,020 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:09:45,020 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:09:45,020 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:09:45,020 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:09:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:10:45 WET)" (scheduled at 2025-03-27 12:09:45.018727+00:00)
+2025-03-27 12:09:45,021 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:09:45,021 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:09:45,021 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:09:45,021 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:10:45 WET)" (scheduled at 2025-03-27 12:09:45.019127+00:00)
+2025-03-27 12:09:45,021 - app.core.orchestrator - WARNING - Balance manager not initialized, cannot update positions
+2025-03-27 12:09:45,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:10:45 WET)" executed successfully
+2025-03-27 12:09:45,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:10:15 WET)" executed successfully
+2025-03-27 12:09:45,481 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:09:45,483 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:09:45,483 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'BCH/USDC']
+2025-03-27 12:09:45,483 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:09:45,483 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:09:46,298 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:09:46,299 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:09:46,299 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'BCH/USDC']
+2025-03-27 12:09:46,299 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:09:46,299 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:09:52,692 - apscheduler.executors.default - INFO - Job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:10:45 WET)" executed successfully
+2025-03-27 12:09:52,763 - app.core.orchestrator - INFO - Calling strategy_module.generate_signals
+2025-03-27 12:09:52,764 - __main__ - INFO - CustomTAStrategyModule generate_signals called with market data
+2025-03-27 12:09:52,764 - __main__ - INFO - Analyzing pair: ETH/USDC
+2025-03-27 12:09:52,765 - __main__ - WARNING - No OHLCV data for ETH/USDC, skipping
+2025-03-27 12:09:52,765 - __main__ - INFO - Analyzing pair: SOL/USDC
+2025-03-27 12:09:52,765 - __main__ - WARNING - No OHLCV data for SOL/USDC, skipping
+2025-03-27 12:09:52,765 - __main__ - INFO - Analyzing pair: BTC/USDC
+2025-03-27 12:09:52,766 - __main__ - WARNING - No OHLCV data for BTC/USDC, skipping
+2025-03-27 12:09:52,766 - __main__ - INFO - Analyzing pair: XRP/USDC
+2025-03-27 12:09:52,766 - __main__ - WARNING - No OHLCV data for XRP/USDC, skipping
+2025-03-27 12:09:52,766 - __main__ - INFO - Analyzing pair: FDUSD/USDC
+2025-03-27 12:09:52,766 - __main__ - WARNING - No OHLCV data for FDUSD/USDC, skipping
+2025-03-27 12:09:52,766 - __main__ - INFO - CustomTAStrategyModule - generated 0 signals based on technical analysis
+2025-03-27 12:09:52,766 - app.core.orchestrator - INFO - Received 0 signals from strategy module
+2025-03-27 12:09:52,767 - app.core.orchestrator - INFO - No trading signals generated
+2025-03-27 12:09:52,769 - apscheduler.executors.default - INFO - Job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:10:45 WET)" executed successfully
+2025-03-27 12:09:52,769 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:10:15,022 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:10:45 WET)" (scheduled at 2025-03-27 12:10:15.019183+00:00)
+2025-03-27 12:10:15,024 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:10:15,024 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:10:45 WET)" executed successfully
+2025-03-27 12:10:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:11:15 WET)" (scheduled at 2025-03-27 12:10:45.019183+00:00)
+2025-03-27 12:10:45,021 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:11:45 WET)" (scheduled at 2025-03-27 12:10:45.018573+00:00)
+2025-03-27 12:10:45,022 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:10:45,022 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:10:45,023 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:11:15 WET)" executed successfully
+2025-03-27 12:10:45,023 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:10:45,023 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:10:45,024 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:11:45 WET)" (scheduled at 2025-03-27 12:10:45.018727+00:00)
+2025-03-27 12:10:45,024 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:10:45,024 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:10:45,024 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:10:45,024 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:11:45 WET)" (scheduled at 2025-03-27 12:10:45.019127+00:00)
+2025-03-27 12:10:45,024 - app.core.orchestrator - WARNING - Balance manager not initialized, cannot update positions
+2025-03-27 12:10:45,024 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:11:45 WET)" executed successfully
+2025-03-27 12:10:45,638 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:10:45,639 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:10:45,639 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:10:45,639 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:10:45,639 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:10:46,316 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:10:46,317 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:10:46,317 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:10:46,317 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:10:46,317 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:10:53,878 - apscheduler.executors.default - INFO - Job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:11:45 WET)" executed successfully
+2025-03-27 12:10:53,892 - app.core.orchestrator - INFO - Calling strategy_module.generate_signals
+2025-03-27 12:10:53,892 - __main__ - INFO - CustomTAStrategyModule generate_signals called with market data
+2025-03-27 12:10:53,892 - __main__ - INFO - Analyzing pair: ETH/USDC
+2025-03-27 12:10:53,892 - __main__ - WARNING - No OHLCV data for ETH/USDC, skipping
+2025-03-27 12:10:53,892 - __main__ - INFO - Analyzing pair: SOL/USDC
+2025-03-27 12:10:53,892 - __main__ - WARNING - No OHLCV data for SOL/USDC, skipping
+2025-03-27 12:10:53,892 - __main__ - INFO - Analyzing pair: BTC/USDC
+2025-03-27 12:10:53,892 - __main__ - WARNING - No OHLCV data for BTC/USDC, skipping
+2025-03-27 12:10:53,892 - __main__ - INFO - Analyzing pair: XRP/USDC
+2025-03-27 12:10:53,892 - __main__ - WARNING - No OHLCV data for XRP/USDC, skipping
+2025-03-27 12:10:53,892 - __main__ - INFO - Analyzing pair: FDUSD/USDC
+2025-03-27 12:10:53,892 - __main__ - WARNING - No OHLCV data for FDUSD/USDC, skipping
+2025-03-27 12:10:53,892 - __main__ - INFO - CustomTAStrategyModule - generated 0 signals based on technical analysis
+2025-03-27 12:10:53,892 - app.core.orchestrator - INFO - Received 0 signals from strategy module
+2025-03-27 12:10:53,892 - app.core.orchestrator - INFO - No trading signals generated
+2025-03-27 12:10:53,893 - apscheduler.executors.default - INFO - Job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:11:45 WET)" executed successfully
+2025-03-27 12:10:53,893 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:11:15,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:11:45 WET)" (scheduled at 2025-03-27 12:11:15.019183+00:00)
+2025-03-27 12:11:15,021 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:11:15,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:11:45 WET)" executed successfully
+2025-03-27 12:11:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:12:15 WET)" (scheduled at 2025-03-27 12:11:45.019183+00:00)
+2025-03-27 12:11:45,021 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:12:45 WET)" (scheduled at 2025-03-27 12:11:45.018573+00:00)
+2025-03-27 12:11:45,021 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:11:45,021 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:11:45,022 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:12:15 WET)" executed successfully
+2025-03-27 12:11:45,022 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:11:45,022 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:11:45,023 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:12:45 WET)" (scheduled at 2025-03-27 12:11:45.018727+00:00)
+2025-03-27 12:11:45,023 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:11:45,023 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:11:45,023 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:11:45,023 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.make_predictions (trigger: interval[0:05:00], next run at: 2025-03-27 12:16:45 WET)" (scheduled at 2025-03-27 12:11:45.019073+00:00)
+2025-03-27 12:11:45,023 - app.core.orchestrator - INFO - No active trading pairs for ML predictions
+2025-03-27 12:11:45,023 - apscheduler.executors.default - INFO - Job "BotOrchestrator.make_predictions (trigger: interval[0:05:00], next run at: 2025-03-27 12:16:45 WET)" executed successfully
+2025-03-27 12:11:45,023 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:12:45 WET)" (scheduled at 2025-03-27 12:11:45.019127+00:00)
+2025-03-27 12:11:45,024 - app.core.orchestrator - WARNING - Balance manager not initialized, cannot update positions
+2025-03-27 12:11:45,024 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:12:45 WET)" executed successfully
+2025-03-27 12:11:45,520 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:11:45,521 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:11:45,521 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:11:45,521 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:11:45,521 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:11:46,331 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:11:46,332 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:11:46,332 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:11:46,332 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:11:46,332 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:11:53,349 - apscheduler.executors.default - INFO - Job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:12:45 WET)" executed successfully
+2025-03-27 12:11:53,612 - app.core.orchestrator - INFO - Calling strategy_module.generate_signals
+2025-03-27 12:11:53,612 - __main__ - INFO - CustomTAStrategyModule generate_signals called with market data
+2025-03-27 12:11:53,612 - __main__ - INFO - Analyzing pair: ETH/USDC
+2025-03-27 12:11:53,612 - __main__ - WARNING - No OHLCV data for ETH/USDC, skipping
+2025-03-27 12:11:53,612 - __main__ - INFO - Analyzing pair: SOL/USDC
+2025-03-27 12:11:53,612 - __main__ - WARNING - No OHLCV data for SOL/USDC, skipping
+2025-03-27 12:11:53,612 - __main__ - INFO - Analyzing pair: BTC/USDC
+2025-03-27 12:11:53,613 - __main__ - WARNING - No OHLCV data for BTC/USDC, skipping
+2025-03-27 12:11:53,613 - __main__ - INFO - Analyzing pair: XRP/USDC
+2025-03-27 12:11:53,613 - __main__ - WARNING - No OHLCV data for XRP/USDC, skipping
+2025-03-27 12:11:53,613 - __main__ - INFO - Analyzing pair: FDUSD/USDC
+2025-03-27 12:11:53,613 - __main__ - WARNING - No OHLCV data for FDUSD/USDC, skipping
+2025-03-27 12:11:53,613 - __main__ - INFO - CustomTAStrategyModule - generated 0 signals based on technical analysis
+2025-03-27 12:11:53,613 - app.core.orchestrator - INFO - Received 0 signals from strategy module
+2025-03-27 12:11:53,613 - app.core.orchestrator - INFO - No trading signals generated
+2025-03-27 12:11:53,614 - apscheduler.executors.default - INFO - Job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:12:45 WET)" executed successfully
+2025-03-27 12:11:53,614 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:12:15,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:12:45 WET)" (scheduled at 2025-03-27 12:12:15.019183+00:00)
+2025-03-27 12:12:15,020 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:12:15,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:12:45 WET)" executed successfully
+2025-03-27 12:12:45,019 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:13:15 WET)" (scheduled at 2025-03-27 12:12:45.019183+00:00)
+2025-03-27 12:12:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:13:45 WET)" (scheduled at 2025-03-27 12:12:45.018573+00:00)
+2025-03-27 12:12:45,021 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:12:45,021 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:12:45,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:13:15 WET)" executed successfully
+2025-03-27 12:12:45,021 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:12:45,021 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:12:45,022 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:13:45 WET)" (scheduled at 2025-03-27 12:12:45.018727+00:00)
+2025-03-27 12:12:45,022 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:12:45,022 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:12:45,022 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:12:45,022 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:13:45 WET)" (scheduled at 2025-03-27 12:12:45.019127+00:00)
+2025-03-27 12:12:45,022 - app.core.orchestrator - WARNING - Balance manager not initialized, cannot update positions
+2025-03-27 12:12:45,022 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:13:45 WET)" executed successfully
+2025-03-27 12:12:45,519 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:12:45,520 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:12:45,520 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:12:45,520 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:12:45,520 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:12:46,264 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:12:46,265 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:12:46,265 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:12:46,265 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:12:46,265 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:12:53,406 - apscheduler.executors.default - INFO - Job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:13:45 WET)" executed successfully
+2025-03-27 12:12:53,416 - app.core.orchestrator - INFO - Calling strategy_module.generate_signals
+2025-03-27 12:12:53,416 - __main__ - INFO - CustomTAStrategyModule generate_signals called with market data
+2025-03-27 12:12:53,416 - __main__ - INFO - Analyzing pair: ETH/USDC
+2025-03-27 12:12:53,416 - __main__ - WARNING - No OHLCV data for ETH/USDC, skipping
+2025-03-27 12:12:53,416 - __main__ - INFO - Analyzing pair: SOL/USDC
+2025-03-27 12:12:53,416 - __main__ - WARNING - No OHLCV data for SOL/USDC, skipping
+2025-03-27 12:12:53,416 - __main__ - INFO - Analyzing pair: BTC/USDC
+2025-03-27 12:12:53,416 - __main__ - WARNING - No OHLCV data for BTC/USDC, skipping
+2025-03-27 12:12:53,416 - __main__ - INFO - Analyzing pair: XRP/USDC
+2025-03-27 12:12:53,416 - __main__ - WARNING - No OHLCV data for XRP/USDC, skipping
+2025-03-27 12:12:53,416 - __main__ - INFO - Analyzing pair: FDUSD/USDC
+2025-03-27 12:12:53,416 - __main__ - WARNING - No OHLCV data for FDUSD/USDC, skipping
+2025-03-27 12:12:53,416 - __main__ - INFO - CustomTAStrategyModule - generated 0 signals based on technical analysis
+2025-03-27 12:12:53,416 - app.core.orchestrator - INFO - Received 0 signals from strategy module
+2025-03-27 12:12:53,416 - app.core.orchestrator - INFO - No trading signals generated
+2025-03-27 12:12:53,417 - apscheduler.executors.default - INFO - Job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:13:45 WET)" executed successfully
+2025-03-27 12:12:53,417 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:13:15,021 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:13:45 WET)" (scheduled at 2025-03-27 12:13:15.019183+00:00)
+2025-03-27 12:13:15,023 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:13:15,023 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:13:45 WET)" executed successfully
+2025-03-27 12:13:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:14:15 WET)" (scheduled at 2025-03-27 12:13:45.019183+00:00)
+2025-03-27 12:13:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:14:45 WET)" (scheduled at 2025-03-27 12:13:45.018573+00:00)
+2025-03-27 12:13:45,021 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:13:45,021 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:13:45,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:14:15 WET)" executed successfully
+2025-03-27 12:13:45,022 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:13:45,022 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:13:45,022 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:14:45 WET)" (scheduled at 2025-03-27 12:13:45.018727+00:00)
+2025-03-27 12:13:45,022 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:13:45,022 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:13:45,022 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:13:45,023 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:14:45 WET)" (scheduled at 2025-03-27 12:13:45.019127+00:00)
+2025-03-27 12:13:45,023 - app.core.orchestrator - WARNING - Balance manager not initialized, cannot update positions
+2025-03-27 12:13:45,023 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:14:45 WET)" executed successfully
+2025-03-27 12:13:45,524 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:13:45,525 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:13:45,525 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:13:45,525 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:13:45,525 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:13:46,224 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:13:46,225 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:13:46,225 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:13:46,225 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:13:46,225 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:13:53,771 - apscheduler.executors.default - INFO - Job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:14:45 WET)" executed successfully
+2025-03-27 12:13:55,867 - app.core.orchestrator - INFO - Calling strategy_module.generate_signals
+2025-03-27 12:13:55,867 - __main__ - INFO - CustomTAStrategyModule generate_signals called with market data
+2025-03-27 12:13:55,867 - __main__ - INFO - Analyzing pair: ETH/USDC
+2025-03-27 12:13:55,867 - __main__ - WARNING - No OHLCV data for ETH/USDC, skipping
+2025-03-27 12:13:55,867 - __main__ - INFO - Analyzing pair: SOL/USDC
+2025-03-27 12:13:55,867 - __main__ - WARNING - No OHLCV data for SOL/USDC, skipping
+2025-03-27 12:13:55,867 - __main__ - INFO - Analyzing pair: BTC/USDC
+2025-03-27 12:13:55,867 - __main__ - WARNING - No OHLCV data for BTC/USDC, skipping
+2025-03-27 12:13:55,867 - __main__ - INFO - Analyzing pair: XRP/USDC
+2025-03-27 12:13:55,867 - __main__ - WARNING - No OHLCV data for XRP/USDC, skipping
+2025-03-27 12:13:55,867 - __main__ - INFO - Analyzing pair: FDUSD/USDC
+2025-03-27 12:13:55,867 - __main__ - WARNING - No OHLCV data for FDUSD/USDC, skipping
+2025-03-27 12:13:55,867 - __main__ - INFO - CustomTAStrategyModule - generated 0 signals based on technical analysis
+2025-03-27 12:13:55,867 - app.core.orchestrator - INFO - Received 0 signals from strategy module
+2025-03-27 12:13:55,867 - app.core.orchestrator - INFO - No trading signals generated
+2025-03-27 12:13:55,868 - apscheduler.executors.default - INFO - Job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:14:45 WET)" executed successfully
+2025-03-27 12:13:55,868 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:14:15,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:14:45 WET)" (scheduled at 2025-03-27 12:14:15.019183+00:00)
+2025-03-27 12:14:15,021 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:14:15,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:14:45 WET)" executed successfully
+2025-03-27 12:14:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:15:15 WET)" (scheduled at 2025-03-27 12:14:45.019183+00:00)
+2025-03-27 12:14:45,020 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:15:45 WET)" (scheduled at 2025-03-27 12:14:45.018573+00:00)
+2025-03-27 12:14:45,021 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update
+2025-03-27 12:14:45,021 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:14:45,021 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_heartbeat (trigger: interval[0:00:30], next run at: 2025-03-27 12:15:15 WET)" executed successfully
+2025-03-27 12:14:45,022 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:14:45,022 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:14:45,022 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:15:45 WET)" (scheduled at 2025-03-27 12:14:45.018727+00:00)
+2025-03-27 12:14:45,022 - app.core.orchestrator - INFO - Selecting trading pairs based on 24h volume...
+2025-03-27 12:14:45,022 - app.exchange.manager - INFO - Fetching top 40 USDC trading pairs by 24h volume
+2025-03-27 12:14:45,022 - app.exchange.manager - INFO - Fetching real tickers from Binance mainnet
+2025-03-27 12:14:45,022 - apscheduler.executors.default - INFO - Running job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:15:45 WET)" (scheduled at 2025-03-27 12:14:45.019127+00:00)
+2025-03-27 12:14:45,022 - app.core.orchestrator - WARNING - Balance manager not initialized, cannot update positions
+2025-03-27 12:14:45,022 - apscheduler.executors.default - INFO - Job "BotOrchestrator.update_position_prices (trigger: interval[0:01:00], next run at: 2025-03-27 12:15:45 WET)" executed successfully
+2025-03-27 12:14:45,479 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:14:45,481 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:14:45,481 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:14:45,481 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:14:45,481 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:14:46,215 - app.exchange.manager - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:14:46,216 - app.core.orchestrator - INFO - Found 40 high volume USDC pairs
+2025-03-27 12:14:46,217 - app.core.orchestrator - INFO - Retrieved top 40 pairs by volume: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC', 'BNB/USDC', 'SUI/USDC', 'DOGE/USDC', 'EUR/USDC', 'ADA/USDC', 'PEPE/USDC', 'HBAR/USDC', 'LINK/USDC', 'TAO/USDC', 'TRUMP/USDC', 'BNX/USDC', 'AVAX/USDC', 'PARTI/USDC', 'S/USDC', 'LTC/USDC', 'ENA/USDC', 'BERA/USDC', 'AAVE/USDC', 'CRV/USDC', 'DOT/USDC', 'RUNE/USDC', 'INJ/USDC', 'SHIB/USDC', 'CAKE/USDC', 'POL/USDC', 'RENDER/USDC', 'NIL/USDC', 'WIF/USDC', 'ZRO/USDC', 'ORCA/USDC', 'KAITO/USDC', 'TRX/USDC', 'LAYER/USDC', 'ALT/USDC', 'TIA/USDC']
+2025-03-27 12:14:46,217 - app.core.orchestrator - INFO - Selected 5 trading pairs for active use: ['ETH/USDC', 'SOL/USDC', 'BTC/USDC', 'XRP/USDC', 'FDUSD/USDC']
+2025-03-27 12:14:46,217 - app.core.orchestrator - INFO - Collecting market data for 5 trading pairs: ETH/USDC, SOL/USDC, BTC/USDC, XRP/USDC, FDUSD/USDC
+2025-03-27 12:14:52,562 - apscheduler.executors.default - INFO - Job "BotOrchestrator.collect_market_data (trigger: interval[0:01:00], next run at: 2025-03-27 12:15:45 WET)" executed successfully
+2025-03-27 12:14:52,583 - app.core.orchestrator - INFO - Calling strategy_module.generate_signals
+2025-03-27 12:14:52,584 - __main__ - INFO - CustomTAStrategyModule generate_signals called with market data
+2025-03-27 12:14:52,584 - __main__ - INFO - Analyzing pair: ETH/USDC
+2025-03-27 12:14:52,584 - __main__ - WARNING - No OHLCV data for ETH/USDC, skipping
+2025-03-27 12:14:52,584 - __main__ - INFO - Analyzing pair: SOL/USDC
+2025-03-27 12:14:52,584 - __main__ - WARNING - No OHLCV data for SOL/USDC, skipping
+2025-03-27 12:14:52,584 - __main__ - INFO - Analyzing pair: BTC/USDC
+2025-03-27 12:14:52,584 - __main__ - WARNING - No OHLCV data for BTC/USDC, skipping
+2025-03-27 12:14:52,584 - __main__ - INFO - Analyzing pair: XRP/USDC
+2025-03-27 12:14:52,584 - __main__ - WARNING - No OHLCV data for XRP/USDC, skipping
+2025-03-27 12:14:52,584 - __main__ - INFO - Analyzing pair: FDUSD/USDC
+2025-03-27 12:14:52,584 - __main__ - WARNING - No OHLCV data for FDUSD/USDC, skipping
+2025-03-27 12:14:52,584 - __main__ - INFO - CustomTAStrategyModule - generated 0 signals based on technical analysis
+2025-03-27 12:14:52,584 - app.core.orchestrator - INFO - Received 0 signals from strategy module
+2025-03-27 12:14:52,584 - app.core.orchestrator - INFO - No trading signals generated
+2025-03-27 12:14:52,585 - apscheduler.executors.default - INFO - Job "BotOrchestrator.patched_generate_signals (trigger: interval[0:01:00], next run at: 2025-03-27 12:15:45 WET)" executed successfully
+2025-03-27 12:14:52,585 - app.core.orchestrator - WARNING - Balance manager not available, skipping historical data update

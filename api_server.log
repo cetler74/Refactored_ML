@@ -1,0 +1,9 @@
+2025-03-26 09:00:01,559 - app.config.settings - INFO - Model save path set to: ./models
+2025-03-26 09:00:01,560 - app.config.settings - INFO - Using default timeframes: ['1m', '5m', '15m', '1h']
+2025-03-26 09:00:01,560 - app.config.settings - INFO - Binance config initialized from environment variables
+2025-03-26 09:00:01,560 - app.config.settings - INFO - Crypto.com config initialized from environment variables
+2025-03-26 09:00:01,560 - app.config.settings - INFO - Loaded Binance credentials: API Key: Found, Secret Key: Found
+2025-03-26 09:00:01,560 - app.config.settings - INFO - Database URL from environment: postgresql+asyncpg://carloslarramba@localhost:5432/trading_bot
+2025-03-26 09:00:01,560 - app.utils.notification_system - INFO - Notification system initialized with channels: console
+2025-03-26 09:00:01,560 - app.core.orchestrator - INFO - Orchestrator initialized in simulation mode
+2025-03-26 09:00:01,562 - app.api.server - INFO - API server initialized

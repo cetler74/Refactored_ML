@@ -1,0 +1,19 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to
+Each compoenent has is only responsability. 
+There must not be duplicated responsabilities between modules.
+No duplicate code must exist or code paths.
+Reuse always existing functions.
+Simulation mode and live mode both must use real data from exchange mainnet.
+We must have all configuration option in a single configuration file.
+Never provide mock solutions
+Never use simplefied versions or minimal versions. Only provide final solutions fixs.
+Do not use placeholder in any part of the code.

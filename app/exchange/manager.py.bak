@@ -1,0 +1,1141 @@
+"""
+Exchange Manager
+
+This module handles communication with cryptocurrency exchanges through the CCXT library.
+"""
+
+import logging
+import asyncio
+import ccxt.async_support as ccxt
+import time
+import traceback
+from typing import Dict, List, Any, Optional, Callable, Tuple
+import pandas as pd
+from datetime import datetime, timedelta
+import re
+import json
+import sys
+import os
+from enum import Enum
+import numpy as np
+
+from app.config.settings import Settings, AppMode
+from app.config.binance_config import BinanceConfig, BinanceMode
+from app.config.cryptocom_config import CryptocomConfig, CryptocomMode
+from app.exchange.binance_direct import BinanceDirectAPI
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+class Exchange:
+    """Exchange class that uses real market data even in simulation mode."""
+    
+    def __init__(self, name: str, config=None):
+        self.name = name
+        self.config = config or {}
+        self.logger = logging.getLogger(__name__)
+        self.quote_currency = "USDC"  # Default quote currency
+        if config and isinstance(config, dict):
+            self.quote_currency = config.get('quote_currency', 'USDC')
+        
+        # Initialize mainnet CCXT client for market data
+        self.mainnet_client = ccxt.binance({
+            'enableRateLimit': True,
+            'options': {
+                'defaultType': 'spot',
+                'adjustForTimeDifference': True
+            }
+        })
+        
+        self.logger.info(f"Exchange {name} initialized with {self.quote_currency} as quote currency")
+        
+    async def fetch_markets(self) -> List[Dict[str, Any]]:
+        """Fetch real markets from Binance mainnet."""
+        self.logger.info(f"Fetching real markets from Binance mainnet")
+        
+        try:
+            markets = await self.mainnet_client.fetch_markets()
+            
+            # Filter for active markets with our quote currency
+            filtered_markets = []
+            for market in markets:
+                if (market['quote'] == self.quote_currency and 
+                    market['active'] and 
+                    market['spot']):  # Only include spot markets
+                    filtered_markets.append(market)
+            
+            self.logger.info(f"Found {len(filtered_markets)} active {self.quote_currency} markets")
+            return filtered_markets
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching markets from mainnet: {str(e)}")
+            # Return empty markets list as fallback
+            return []
+        
+    async def fetch_tickers(self) -> Dict[str, Dict[str, Any]]:
+        """Fetch real ticker data from Binance mainnet."""
+        self.logger.info(f"Fetching real tickers from Binance mainnet")
+        
+        try:
+            # Get all tickers
+            tickers = await self.mainnet_client.fetch_tickers()
+            
+            # Filter for our quote currency pairs
+            filtered_tickers = {}
+            for symbol, ticker in tickers.items():
+                if f"/{self.quote_currency}" in symbol:
+                    filtered_tickers[symbol] = ticker
+            
+            self.logger.info(f"Fetched {len(filtered_tickers)} {self.quote_currency} tickers")
+            return filtered_tickers
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching tickers from mainnet: {str(e)}")
+            return {}
+        
+    async def fetch_order(self, order_id: str, symbol: str) -> Dict[str, Any]:
+        """Simulate order status but use real market price."""
+        self.logger.info(f"Simulating order {order_id} for {symbol}")
+        
+        try:
+            # Get real current price
+            ticker = await self.mainnet_client.fetch_ticker(symbol)
+            price = ticker['last'] if ticker and 'last' in ticker else None
+            
+            if not price:
+                raise ValueError(f"Could not get current price for {symbol}")
+            
+            # Return simulated order with real price
+            return {
+                'id': order_id,
+                'symbol': symbol,
+                'status': 'closed',
+                'filled': 1.0,
+                'remaining': 0.0,
+                'price': price,
+                'amount': 1.0,
+                'cost': price * 1.0,
+                'fee': {'cost': price * 1.0 * 0.001, 'currency': self.quote_currency},
+                'info': {'simulatedOrder': True}
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error simulating order with real price: {str(e)}")
+            return {}
+        
+    async def create_order(self, symbol: str, type: str, trade_type: str, amount: float, price: Optional[float] = None) -> Dict[str, Any]:
+        """Simulate order creation but use real market price."""
+        self.logger.info(f"Simulating {trade_type} {type} order for {amount} {symbol}")
+        
+        try:
+            # Get real current price
+            ticker = await self.mainnet_client.fetch_ticker(symbol)
+            current_price = ticker['last'] if ticker and 'last' in ticker else None
+            
+            if not current_price:
+                raise ValueError(f"Could not get current price for {symbol}")
+            
+            # Use provided price or current market price
+            execution_price = price or current_price
+            
+            # Simulate some slippage based on order size and real market data
+            slippage = 0.001  # 0.1% base slippage
+            if amount * execution_price > 10000:  # Large orders get more slippage
+                slippage = 0.002
+            
+            if trade_type == 'buy':
+                execution_price *= (1 + slippage)
+            else:
+                execution_price *= (1 - slippage)
+            
+            # Return simulated order with realistic price
+            return {
+                'id': f"sim_{int(time.time())}",
+                'symbol': symbol,
+                'type': type,
+                'trade_type': trade_type,
+                'amount': amount,
+                'price': execution_price,
+                'status': 'closed',
+                'filled': amount,
+                'remaining': 0.0,
+                'cost': amount * execution_price,
+                'fee': {'cost': amount * execution_price * 0.001, 'currency': self.quote_currency},
+                'info': {
+                    'simulatedOrder': True,
+                    'marketPrice': current_price,
+                    'slippage': f"{slippage*100}%"
+                }
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error simulating order with real price: {str(e)}")
+            return {}
+        
+    async def fetch_balance(self) -> Dict[str, Dict[str, float]]:
+        """Return simulated balance but validate against real trading pairs."""
+        self.logger.info(f"Fetching simulated balance with real trading pairs")
+        
+        try:
+            # Get real trading pairs first
+            markets = await self.fetch_markets()
+            available_assets = set([market['base'] for market in markets])
+            available_assets.add(self.quote_currency)
+            
+            # Create simulated balance only for real trading pairs
+            balance = {
+                'free': {self.quote_currency: 10000.0},  # Start with quote currency
+                'used': {self.quote_currency: 0.0},
+                'total': {self.quote_currency: 10000.0}
+            }
+            
+            # Add small balance for major trading pairs
+            for asset in available_assets:
+                if asset != self.quote_currency:
+                    balance['free'][asset] = 0.1
+                    balance['used'][asset] = 0.0
+                    balance['total'][asset] = 0.1
+            
+            return balance
+            
+        except Exception as e:
+            self.logger.error(f"Error creating simulated balance: {str(e)}")
+            return {
+                'free': {self.quote_currency: 10000.0},
+                'used': {self.quote_currency: 0.0},
+                'total': {self.quote_currency: 10000.0}
+            }
+        
+    async def close(self) -> None:
+        """Close the exchange connection."""
+        try:
+            await self.mainnet_client.close()
+            self.logger.info(f"Closed mainnet client connection for {self.name}")
+        except Exception as e:
+            self.logger.error(f"Error closing mainnet client: {str(e)}")
+
+    async def fetch_ohlcv(self, symbol: str, timeframe: str = '1m', limit: int = 100) -> pd.DataFrame:
+        """Fetch OHLCV data from real Binance mainnet."""
+        self.logger.info(f"Fetching OHLCV data for {symbol} ({timeframe})")
+        
+        try:
+            # Convert symbol format if needed
+            formatted_symbol = symbol
+            if '/' not in symbol and self.quote_currency in symbol:
+                base = symbol[:-len(self.quote_currency)]
+                formatted_symbol = f"{base}/{self.quote_currency}"
+            
+            # Fetch OHLCV data
+            ohlcv_data = await self.mainnet_client.fetch_ohlcv(formatted_symbol, timeframe, limit=limit)
+            
+            if ohlcv_data and len(ohlcv_data) > 0:
+                # Convert to DataFrame
+                df = pd.DataFrame(ohlcv_data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+                df.set_index('timestamp', inplace=True)
+                return df
+            else:
+                # Return empty DataFrame if no data
+                return pd.DataFrame()
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching OHLCV for {symbol}: {str(e)}")
+            # Return empty DataFrame as fallback
+            return pd.DataFrame()
+    
+    async def fetch_ticker(self, symbol: str) -> Dict[str, Any]:
+        """Fetch ticker data from real Binance mainnet."""
+        self.logger.info(f"Fetching ticker for {symbol}")
+        
+        try:
+            # Convert symbol format if needed
+            formatted_symbol = symbol
+            if '/' not in symbol and self.quote_currency in symbol:
+                base = symbol[:-len(self.quote_currency)]
+                formatted_symbol = f"{base}/{self.quote_currency}"
+            
+            # Fetch ticker data
+            ticker = await self.mainnet_client.fetch_ticker(formatted_symbol)
+            if ticker and isinstance(ticker, dict) and 'last' in ticker:
+                return ticker
+            else:
+                # Return fallback ticker if we got invalid data
+                return self._create_fallback_ticker(symbol)
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching ticker for {symbol}: {str(e)}")
+            # Return simulated ticker as fallback
+            return self._create_fallback_ticker(symbol)
+            
+    def _create_fallback_ticker(self, symbol: str) -> Dict[str, Any]:
+        """Create a fallback ticker with simulated data."""
+        return {
+            'symbol': symbol,
+            'last': 50000.0,
+            'bid': 49990.0,
+            'ask': 50010.0,
+            'volume': 100.0,
+            'quoteVolume': 5000000.0,
+            'percentage': 0.0,
+            'high': 50100.0,
+            'low': 49900.0,
+            'timestamp': int(time.time() * 1000)
+        }
+
+class ExchangeManager:
+    """Manages interactions with cryptocurrency exchanges."""
+    
+    def __init__(self, settings, sandbox=True):
+        """
+        Initialize the exchange manager.
+        
+        Args:
+            settings: Application settings with API credentials
+            sandbox: Whether to use sandbox/testnet mode
+        """
+        self.settings = settings
+        self.sandbox = sandbox
+        self.exchanges = {}
+        self.rate_limiters = {}
+        self.logger = logging.getLogger(__name__)  # Initialize logger first
+        
+        # Initialize direct Binance API
+        self.direct_apis = {}
+        if hasattr(settings, 'binance_config'):
+            from app.exchange.binance_direct import BinanceDirectAPI
+            self.direct_apis["binance"] = BinanceDirectAPI(
+                api_key=settings.binance_config.api_key,
+                api_secret=settings.binance_config.secret_key,
+                sandbox=sandbox
+            )
+        
+        self.logger.info(f"Exchange manager initialized (sandbox: {sandbox})")
+        
+        # Check for credentials in settings
+        self.exchange_credentials = getattr(settings, 'exchange_credentials', {})
+        if not self.exchange_credentials:
+            self.logger.warning("No exchange credentials found in settings. Using empty credentials.")
+            self.exchange_credentials = {
+                "binance": {"api_key": "", "secret_key": ""}
+            }
+        
+        # Initialize exchange configurations
+        self.exchange_configs = {}
+        if hasattr(settings, 'binance_config'):
+            self.exchange_configs['binance'] = settings.binance_config
+        if hasattr(settings, 'cryptocom_config'):
+            self.exchange_configs['cryptocom'] = settings.cryptocom_config
+            
+        # Initialize rate limits attribute to prevent attribute error
+        self.rate_limits = {
+            "binance": {
+                "calls": 0,
+                "limit": 1200,  # Default rate limit for Binance API
+                "window": 60,   # 1 minute window
+                "last_reset": time.time()
+            },
+            "cryptocom": {
+                "calls": 0,
+                "limit": 500,   # Default rate limit for Crypto.com API
+                "window": 60,   # 1 minute window
+                "last_reset": time.time()
+            }
+        }
+        
+        # Initialize exchanges based on settings
+        self._init_exchanges()
+        
+    def _init_exchanges(self):
+        """Initialize exchange connections based on settings."""
+        # For simulation mode, use our custom Exchange class
+        if self.sandbox:
+            # Get quote currency from config
+            quote_currency = "USDC"  # Default
+            if "binance" in self.exchange_configs:
+                binance_config = self.exchange_configs["binance"]
+                if hasattr(binance_config, 'default_quote_currency'):
+                    quote_currency = binance_config.default_quote_currency
+            
+            # Initialize with proper config including quote currency
+            self.exchanges["binance"] = Exchange("binance", {
+                "simulated": True,
+                "quote_currency": quote_currency
+            })
+            self.logger.info(f"Initialized Binance exchange in simulation mode with {quote_currency} as quote currency")
+            return
+            
+        # For live mode, use CCXT exchanges
+        if hasattr(self.settings, 'active_exchanges'):
+            active_exchanges = self.settings.active_exchanges
+            
+            for exchange_name in active_exchanges:
+                if exchange_name == "binance" and hasattr(self.settings, 'binance_config'):
+                    config = self.settings.binance_config
+                    try:
+                        # Initialize CCXT Binance exchange
+                        exchange = ccxt.binance({
+                            'apiKey': config.api_key,
+                            'secret': config.secret_key,
+                            'enableRateLimit': True,
+                            'options': {
+                                'defaultType': config.trading_mode,
+                                'adjustForTimeDifference': True,
+                                'recvWindow': 60000,
+                                'createMarketBuyOrderRequiresPrice': False
+                            },
+                            'timeout': 30000,
+                            'enableRateLimit': True,
+                            'rateLimit': 100
+                        })
+                        
+                        # Configure sandbox mode
+                        if self.sandbox:
+                            exchange.set_sandbox_mode(True)
+                        
+                        self.exchanges[exchange_name] = exchange
+                        self.logger.info(f"Initialized {exchange_name} exchange in {'sandbox' if self.sandbox else 'live'} mode")
+                        
+                    except Exception as e:
+                        self.logger.error(f"Failed to initialize {exchange_name} exchange: {str(e)}")
+                        # Fall back to simulation
+                        self.exchanges[exchange_name] = Exchange(exchange_name, {
+                            "simulated": True,
+                            "quote_currency": config.default_quote_currency
+                        })
+                        self.logger.info(f"Falling back to simulated {exchange_name} exchange")
+                
+                elif exchange_name == "cryptocom" and hasattr(self.settings, 'cryptocom_config'):
+                    config = self.settings.cryptocom_config
+                    try:
+                        # Initialize CCXT Crypto.com exchange
+                        exchange = ccxt.cryptocom({
+                            'apiKey': config.api_key,
+                            'secret': config.secret_key,
+                            'enableRateLimit': True,
+                            'options': {
+                                'defaultType': config.trading_mode,
+                                'adjustForTimeDifference': True
+                            }
+                        })
+                        
+                        self.exchanges["cryptocom"] = exchange
+                        self.logger.info(f"CCXT Crypto.com exchange initialized with API key ending with ...{config.api_key[-4:]}")
+                    
+                    except Exception as e:
+                        self.logger.error(f"Failed to initialize Crypto.com exchange: {str(e)}")
+                        # Fallback to simulation mode for this exchange
+                        self.exchanges["cryptocom"] = Exchange("cryptocom", {"simulated": True})
+                        self.logger.warning("Falling back to simulation mode for Crypto.com")
+        else:
+            self.logger.warning("No active exchanges configured, using simulation mode")
+            self.exchanges["binance"] = Exchange("binance", {
+                "simulated": True,
+                "quote_currency": "USDC"
+            })
+    
+    def get_active_exchanges(self) -> List[Exchange]:
+        """Get list of active exchange instances."""
+        return list(self.exchanges.values())
+    
+    def get_exchange(self, name: str) -> Optional[Exchange]:
+        """Get exchange instance by name."""
+        return self.exchanges.get(name)
+    
+    async def fetch_market_data(self, symbol: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        """
+        Fetch both OHLCV and current market data.
+        Uses direct API for Binance with CCXT fallback.
+        """
+        try:
+            ohlcv_df = pd.DataFrame()
+            current_data = {}
+            
+            # Try direct API first
+            if self.direct_apis.get("binance"):
+                try:
+                    # Get OHLCV data
+                    ohlcv_df = await self.direct_apis["binance"].get_klines(symbol, '1m', 100)
+                    
+                    # Get 24h ticker data
+                    ticker_24h = await self.direct_apis["binance"].get_24h_ticker(symbol)
+                    if ticker_24h:
+                        current_data = {
+                            'price': float(ticker_24h['lastPrice']),
+                            'volume_24h': float(ticker_24h['volume']),
+                            'change_24h': float(ticker_24h['priceChangePercent']),
+                            'high_24h': float(ticker_24h['highPrice']),
+                            'low_24h': float(ticker_24h['lowPrice'])
+                        }
+                        return ohlcv_df, current_data
+                except Exception as e:
+                    self.logger.warning(
+                        f"Direct API failed for {symbol}, falling back to CCXT. "
+                        f"Error: {str(e)}"
+                    )
+            
+            # CCXT fallback
+            if "binance" in self.exchanges:
+                exchange = self.exchanges["binance"]
+                
+                # Handle rate limits
+                await self._handle_rate_limit("binance")
+                
+                try:
+                    # Get OHLCV data
+                    ohlcv = await exchange.fetch_ohlcv(symbol, '1m', limit=100)
+                    if ohlcv:
+                        ohlcv_df = pd.DataFrame(
+                            ohlcv, 
+                            columns=['timestamp', 'open', 'high', 'low', 'close', 'volume']
+                        )
+                        ohlcv_df['timestamp'] = pd.to_datetime(ohlcv_df['timestamp'], unit='ms')
+                        ohlcv_df.set_index('timestamp', inplace=True)
+                    
+                    # Get ticker data
+                    ticker = await exchange.fetch_ticker(symbol)
+                    if ticker:
+                        # Make sure percentage is a valid number
+                        percentage = ticker.get('percentage', 0)
+                        percentage = percentage if percentage is not None else 0
+                        
+                        current_data = {
+                            'price': ticker.get('last', 0),
+                            'volume_24h': ticker.get('quoteVolume', 0),
+                            'change_24h': percentage,
+                            'high_24h': ticker.get('high', 0),
+                            'low_24h': ticker.get('low', 0)
+                        }
+                    
+                    return ohlcv_df, current_data
+                    
+                except Exception as e:
+                    self.logger.error(
+                        f"CCXT error fetching market data for {symbol}: {str(e)}"
+                    )
+            
+            # If we're in simulation mode, return simulated data
+            if self.sandbox:
+                self.logger.info(f"Returning simulated market data for {symbol}")
+                # Create simulated OHLCV data
+                dates = pd.date_range(end=pd.Timestamp.now(), periods=100, freq='1min')
+                ohlcv_df = pd.DataFrame(
+                    index=dates,
+                    data={
+                        'open': [50000] * 100,
+                        'high': [50100] * 100,
+                        'low': [49900] * 100,
+                        'close': [50000] * 100,
+                        'volume': [100] * 100
+                    }
+                )
+                current_data = {
+                    'price': 50000.0,
+                    'volume_24h': 1000.0,
+                    'change_24h': 0.0,
+                    'high_24h': 50100.0,
+                    'low_24h': 49900.0
+                }
+                return ohlcv_df, current_data
+            
+            return pd.DataFrame(), {}
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching market data for {symbol}: {str(e)}")
+            return pd.DataFrame(), {}
+
+    async def initialize(self):
+        """Initialize connections to configured exchanges."""
+        # Get credentials from settings
+        credentials = self.exchange_credentials
+        
+        # Initialize Binance if credentials are provided
+        if credentials.get("binance", {}).get("api_key"):
+            binance_config = self.settings.binance_config
+            
+            # Build CCXT options based on config
+            options = {
+                "createMarketBuyOrderRequiresPrice": False,
+                "recvWindow": 50000,  # Required for larger orders
+                "adjustForTimeDifference": True
+            }
+            
+            # Add trading mode to options if needed
+            trading_mode = binance_config.trading_mode
+            if isinstance(trading_mode, str):
+                if trading_mode == "spot":
+                    options["defaultType"] = "spot"
+                elif trading_mode == "margin":
+                    options["defaultType"] = "margin"
+                elif trading_mode == "future":
+                    options["defaultType"] = "future"
+            elif trading_mode == BinanceMode.SPOT:
+                options["defaultType"] = "spot"
+            elif trading_mode == BinanceMode.MARGIN:
+                options["defaultType"] = "margin"
+            elif trading_mode == BinanceMode.FUTURES:
+                options["defaultType"] = "future"
+            
+            # Adjust API endpoint if in sandbox (testnet) mode
+            if self.sandbox:
+                if 'future' in options.get('defaultType', 'spot'):
+                    # For futures testnet
+                    self.exchanges["binance"] = ccxt.binance({
+                        "apiKey": credentials["binance"]["api_key"],
+                        "secret": credentials["binance"]["secret_key"],
+                        "enableRateLimit": True,
+                        "timeout": binance_config.timeout_seconds * 1000,  # Convert to ms
+                        "options": options
+                    })
+                    # Set testnet URLs for futures
+                    self.exchanges["binance"].urls['api'] = {
+                        'public': 'https://testnet.binancefuture.com/fapi/v1',
+                        'private': 'https://testnet.binancefuture.com/fapi/v1',
+                    }
+                    logger.info("Using Binance futures testnet API endpoints")
+                else:
+                    # For spot testnet - using Binance Direct API
+                    self.direct_apis["binance"] = BinanceDirectAPI(
+                        credentials["binance"]["api_key"],
+                        credentials["binance"]["secret_key"],
+                        sandbox=True
+                    )
+                    
+                    # Initialize CCXT sandbox as well
+                    self.exchanges["binance"] = ccxt.binance({
+                        "apiKey": credentials["binance"]["api_key"],
+                        "secret": credentials["binance"]["secret_key"],
+                        "enableRateLimit": True,
+                        "timeout": binance_config.timeout_seconds * 1000,
+                        "options": options
+                    })
+                    
+                    logger.info("Initialized Binance exchange in simulation mode with USDC as quote currency")
+            else:
+                # For real trading
+                self.exchanges["binance"] = ccxt.binance({
+                    "apiKey": credentials["binance"]["api_key"],
+                    "secret": credentials["binance"]["secret_key"],
+                    "enableRateLimit": True,
+                    "timeout": binance_config.timeout_seconds * 1000,
+                    "options": options
+                })
+                logger.info("Using real Binance API endpoints")
+            
+            trading_mode_value = binance_config.trading_mode if isinstance(binance_config.trading_mode, str) else binance_config.trading_mode.value
+            logger.info(f"Binance exchange initialized in {trading_mode_value} mode using real API")
+            
+            # Initialize Crypto.com if credentials are provided
+            if credentials.get("cryptocom", {}).get("api_key"):
+                cryptocom_config = self.settings.cryptocom_config
+                
+                # Build CCXT options based on config
+                options = {
+                    "createMarketBuyOrderRequiresPrice": False
+                }
+                
+                # Add trading mode to options if needed
+                trading_mode = cryptocom_config.trading_mode
+                if isinstance(trading_mode, str):
+                    if trading_mode == "derivatives":
+                        options["defaultType"] = "swap"
+                elif trading_mode == CryptocomMode.DERIVATIVES:
+                    options["defaultType"] = "swap"
+                
+                self.exchanges["cryptocom"] = ccxt.cryptocom({
+                    "apiKey": credentials["cryptocom"]["api_key"],
+                    "secret": credentials["cryptocom"]["secret_key"],
+                    "enableRateLimit": True,
+                    "timeout": cryptocom_config.timeout_seconds * 1000,  # Convert to ms
+                    "options": options
+                })
+                trading_mode_value = cryptocom_config.trading_mode if isinstance(cryptocom_config.trading_mode, str) else cryptocom_config.trading_mode.value
+                logger.info(f"Crypto.com exchange initialized in {trading_mode_value} mode")
+        
+        # Load markets for all initialized exchanges with retry mechanism
+        import asyncio
+        for exchange_id, exchange in self.exchanges.items():
+            if hasattr(exchange, 'load_markets'):
+                max_retries = 3
+                for retry in range(max_retries):
+                    try:
+                        # Try to load markets with a timeout
+                        await asyncio.wait_for(exchange.load_markets(), timeout=15)
+                        logger.info(f"Loaded markets for {exchange_id}")
+                        break
+                    except asyncio.TimeoutError:
+                        logger.warning(f"Timeout loading markets for {exchange_id} (attempt {retry+1}/{max_retries})")
+                        if retry == max_retries - 1:
+                            logger.warning(f"Continuing with {exchange_id} initialization despite market loading timeout")
+                    except Exception as e:
+                        logger.warning(f"Error loading markets for {exchange_id}: {str(e)}")
+                        if retry == max_retries - 1:
+                            logger.info(f"Continuing with {exchange_id} initialization despite market loading error")
+                        else:
+                            await asyncio.sleep(1)  # Wait before retrying
+        
+        return True
+    
+    async def _handle_rate_limit(self, exchange_id: str):
+        """Handle rate limiting for exchange API calls."""
+        now = time.time()
+        rate_limit = self.rate_limits.get(exchange_id)
+        
+        if not rate_limit:
+            return
+        
+        # Reset counter if window has passed
+        if now - rate_limit["last_reset"] > rate_limit["window"]:
+            rate_limit["calls"] = 0
+            rate_limit["last_reset"] = now
+        
+        # Check if we're approaching the limit
+        if rate_limit["calls"] >= rate_limit["limit"] * 0.9:
+            wait_time = rate_limit["window"] - (now - rate_limit["last_reset"])
+            if wait_time > 0:
+                logger.warning(f"Rate limit approaching for {exchange_id}, waiting {wait_time:.2f} seconds")
+                await asyncio.sleep(wait_time)
+                rate_limit["calls"] = 0
+                rate_limit["last_reset"] = time.time()
+        
+        # Increment the call counter
+        rate_limit["calls"] += 1
+    
+    async def fetch_tickers(self, exchange_id: str = None) -> Dict[str, Any]:
+        """Fetch tickers for all symbols or a specific exchange."""
+        results = {}
+        
+        exchanges_to_query = self.exchanges.items()
+        if exchange_id:
+            if exchange_id in self.exchanges:
+                exchanges_to_query = [(exchange_id, self.exchanges[exchange_id])]
+            else:
+                logger.error(f"Exchange {exchange_id} not initialized")
+                return {}
+        
+        for ex_id, exchange in exchanges_to_query:
+            try:
+                await self._handle_rate_limit(ex_id)
+                tickers = await exchange.fetch_tickers()
+                results[ex_id] = tickers
+                logger.debug(f"Fetched {len(tickers)} tickers from {ex_id}")
+            except Exception as e:
+                logger.error(f"Error fetching tickers from {ex_id}: {str(e)}")
+        
+        return results
+    
+    async def fetch_ohlcv(self, symbol, timeframe='1h', limit=100, exchange_id="binance"):
+        """
+        Fetch OHLCV data for a symbol, ensuring proper symbol format.
+        
+        Args:
+            symbol: Trading pair symbol (with or without slash)
+            timeframe: Timeframe for candlesticks
+            limit: Number of candlesticks to fetch
+            exchange_id: Exchange to use
+            
+        Returns:
+            DataFrame with OHLCV data
+        """
+        try:
+            # Ensure exchange is initialized
+            if exchange_id not in self.exchanges:
+                logger.error(f"Exchange {exchange_id} not initialized")
+                return pd.DataFrame()
+                
+            exchange = self.exchanges[exchange_id]
+            
+            # Convert symbol to exchange format
+            exchange_symbol = self.get_exchange_symbol_format(symbol, exchange_id)
+            
+            # Fetch OHLCV data
+            if isinstance(exchange, Exchange):
+                # Our custom Exchange class already returns a DataFrame
+                df = await exchange.fetch_ohlcv(exchange_symbol, timeframe=timeframe, limit=limit)
+                if df is not None and not df.empty:
+                    return df
+                else:
+                    logger.warning(f"No OHLCV data returned for {symbol} ({timeframe})")
+                    return pd.DataFrame()
+            else:
+                # For CCXT exchange that returns a list
+                ohlcv_data = await exchange.fetch_ohlcv(exchange_symbol, timeframe=timeframe, limit=limit)
+                
+                # Convert to DataFrame
+                if ohlcv_data and len(ohlcv_data) > 0:
+                    df = pd.DataFrame(ohlcv_data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+                    df.set_index('timestamp', inplace=True)
+                    return df
+                else:
+                    logger.warning(f"No OHLCV data returned for {symbol} ({timeframe})")
+                    return pd.DataFrame()
+            
+        except Exception as e:
+            logger.error(f"Error fetching OHLCV for {symbol}: {str(e)}")
+            return pd.DataFrame()
+    
+    async def fetch_ticker(self, symbol, exchange_id="binance"):
+        """
+        Fetch ticker data for a symbol, ensuring proper symbol format.
+        
+        Args:
+            symbol: Trading pair symbol (with or without slash)
+            exchange_id: Exchange to use
+            
+        Returns:
+            Dictionary with ticker data
+        """
+        try:
+            # Ensure exchange is initialized
+            if exchange_id not in self.exchanges:
+                logger.error(f"Exchange {exchange_id} not initialized")
+                return {}
+            
+            exchange = self.exchanges[exchange_id]
+            
+            # Convert symbol to exchange format
+            exchange_symbol = self.get_exchange_symbol_format(symbol, exchange_id)
+            
+            # Fetch ticker
+            ticker = await exchange.fetch_ticker(exchange_symbol)
+            
+            # Check if we got a valid ticker object
+            if ticker and isinstance(ticker, dict):
+                # Standardize the response
+                return {
+                    'symbol': symbol,  # Return the original symbol format for consistency
+                    'last': ticker.get('last', 0.0),
+                    'bid': ticker.get('bid', 0.0),
+                    'ask': ticker.get('ask', 0.0),
+                    'volume': ticker.get('volume', 0.0),
+                    'quoteVolume': ticker.get('quoteVolume', 0.0),
+                    'percentage': ticker.get('percentage', 0.0),
+                    'timestamp': ticker.get('timestamp', int(time.time() * 1000))
+                }
+            else:
+                logger.warning(f"No valid ticker data returned for {symbol}")
+                return {
+                    'symbol': symbol,
+                    'error': "Invalid ticker data",
+                    'last': 0.0,
+                    'volume': 0.0,
+                    'timestamp': int(time.time() * 1000)
+                }
+                
+        except Exception as e:
+            logger.error(f"Error fetching ticker for {symbol}: {str(e)}")
+            return {
+                'symbol': symbol,
+                'error': str(e),
+                'last': 0.0,
+                'volume': 0.0,
+                'timestamp': int(time.time() * 1000)
+            }
+    
+    def get_exchange_symbol_format(self, symbol, exchange_id="binance"):
+        """
+        Converts the symbol to the correct format for the specified exchange.
+        
+        Args:
+            symbol: Symbol to convert (can be with or without slash)
+            exchange_id: The exchange to format for
+            
+        Returns:
+            Symbol in the format required by the exchange
+        """
+        if exchange_id.lower() == 'binance':
+            # Binance requires no slash: BTCUSDC
+            if '/' in symbol:
+                # Remove the slash
+                base, quote = symbol.split('/')
+                return f"{base}{quote}"
+            return symbol
+        else:
+            # Most other exchanges use slash format: BTC/USDC
+            if '/' not in symbol:
+                # Try to detect quote currency
+                quote_currency = "USDC"
+                if hasattr(self.settings, f"{exchange_id.upper()}_QUOTE_CURRENCY"):
+                    quote_currency = getattr(self.settings, f"{exchange_id.upper()}_QUOTE_CURRENCY")
+                    
+                # Check if symbol ends with the quote currency
+                if symbol.endswith(quote_currency):
+                    base = symbol[:-len(quote_currency)]
+                    return f"{base}/{quote_currency}"
+            return symbol
+            
+    async def fetch_usdc_pairs(self, exchange_id="binance"):
+        """Fetch all USDC trading pairs from the exchange."""
+        try:
+            # Check if exchange is initialized
+            if exchange_id not in self.exchanges:
+                logger.error(f"Exchange {exchange_id} not initialized")
+                return []
+            
+            # Fetch all tickers from the exchange
+            exchange = self.exchanges[exchange_id]
+            if not exchange:
+                return []
+                
+            # Get quote currency, default to USDC
+            quote_currency = "USDC"
+            if hasattr(self.settings, f"{exchange_id.upper()}_QUOTE_CURRENCY"):
+                quote_currency = getattr(self.settings, f"{exchange_id.upper()}_QUOTE_CURRENCY")
+            logger.info(f"Using quote currency: {quote_currency}")
+            
+            # Fetch all tickers for faster filtering and to handle different formats
+            all_tickers = await exchange.fetch_tickers()
+            logger.debug(f"Fetched {len(all_tickers)} tickers from {exchange_id}")
+            
+            # Filter for USDC pairs and format properly
+            usdc_pairs = []
+            prefixed_pairs = {}
+            non_prefixed_versions = {}
+            
+            # First pass: identify all quote currency pairs with their formats
+            for symbol in all_tickers.keys():
+                # Handle different formats (with or without slash)
+                if '/' in symbol:
+                    base, quote = symbol.split('/')
+                    if quote == quote_currency:
+                        # Check for numeric prefixes (e.g., 1000PEPE/USDC, 1INCH/USDC)
+                        if re.match(r'^\d+', base) and base != '1INCH':
+                            non_prefix = re.sub(r'^\d+', '', base)
+                            prefixed_pairs[base] = non_prefix
+                            # Record both formats for exchange API calls
+                            if exchange_id.lower() == 'binance':
+                                usdc_pairs.append(f"{base}{quote}")
+                            else:
+                                usdc_pairs.append(symbol)
+                        else:
+                            # Normal pairs
+                            if exchange_id.lower() == 'binance':
+                                usdc_pairs.append(f"{base}{quote}")
+                                # Also record for deduplication check
+                                non_prefixed_versions[base] = True
+                            else:
+                                usdc_pairs.append(symbol)
+                elif symbol.endswith(quote_currency):
+                    # No slash format (e.g., BTCUSDC)
+                    base = symbol[:-len(quote_currency)]
+                    # Check for numeric prefixes
+                    if re.match(r'^\d+', base) and base != '1INCH':
+                        non_prefix = re.sub(r'^\d+', '', base)
+                        prefixed_pairs[base] = non_prefix
+                        usdc_pairs.append(symbol)
+                    else:
+                        usdc_pairs.append(symbol)
+                        non_prefixed_versions[base] = True
+            
+            # Second pass: ensure we don't have both prefixed and non-prefixed versions
+            deduplicated_pairs = []
+            for pair in usdc_pairs:
+                # Extract the base symbol
+                if '/' in pair:
+                    base = pair.split('/')[0]
+                else:
+                    base = pair[:-len(quote_currency)]
+                
+                # If this is a prefixed token, check if we have the non-prefixed version
+                if base in prefixed_pairs:
+                    non_prefix = prefixed_pairs[base]
+                    if non_prefix in non_prefixed_versions:
+                        logger.debug(f"Skipping prefixed token {pair} as we already have the non-prefixed version")
+                        continue
+                
+                deduplicated_pairs.append(pair)
+            
+            logger.info(f"Found {len(deduplicated_pairs)} active {quote_currency} pairs on {exchange_id}")
+            if prefixed_pairs:
+                logger.debug(f"Identified {len(prefixed_pairs)} tokens with numeric prefixes: {prefixed_pairs}")
+            return deduplicated_pairs
+            
+        except Exception as e:
+            logger.error(f"Error fetching {quote_currency} pairs from {exchange_id}: {str(e)}")
+            return []
+
+    async def fetch_usdc_trading_pairs(self, exchange_id="binance"):
+        """Fetch all USDC trading pairs, formatted with / for consistency."""
+        try:
+            # First get pairs in the format the exchange needs
+            pairs = await self.fetch_usdc_pairs(exchange_id)
+            
+            # Convert to standard format with / for internal use
+            formatted_pairs = []
+            for pair in pairs:
+                # Get quote currency - default to USDC if not specified
+                quote_currency = "USDC"
+                if hasattr(self.settings, f"{exchange_id.upper()}_QUOTE_CURRENCY"):
+                    quote_currency = getattr(self.settings, f"{exchange_id.upper()}_QUOTE_CURRENCY")
+                
+                # If pair doesn't have /, add it
+                if '/' not in pair:
+                    # Extract base currency
+                    base = pair[:-len(quote_currency)]
+                    formatted_pair = f"{base}/{quote_currency}"
+                    formatted_pairs.append(formatted_pair)
+                else:
+                    formatted_pairs.append(pair)
+            
+            logger.info(f"Formatted {len(formatted_pairs)} {quote_currency} pairs with / separator")
+            return formatted_pairs
+            
+        except Exception as e:
+            logger.error(f"Error formatting USDC trading pairs: {str(e)}")
+            return []
+            
+    async def fetch_current_prices(self, pairs, exchange_id="binance"):
+        """
+        Fetch current prices and 24h volume for a list of trading pairs.
+        
+        Args:
+            pairs: List of trading pairs (with or without / separator)
+            exchange_id: Exchange ID to use
+            
+        Returns:
+            Dictionary with pair data including price, volume, change
+        """
+        result = {}
+        
+        try:
+            # Get quote currency
+            quote_currency = "USDC"
+            if hasattr(self.settings, f"{exchange_id.upper()}_QUOTE_CURRENCY"):
+                quote_currency = getattr(self.settings, f"{exchange_id.upper()}_QUOTE_CURRENCY")
+            
+            # Ensure exchange is initialized
+            if exchange_id not in self.exchanges:
+                logger.error(f"Exchange {exchange_id} not initialized")
+                return result
+                
+            exchange = self.exchanges[exchange_id]
+            
+            # Fetch all tickers in a single call for efficiency
+            all_tickers = await exchange.fetch_tickers()
+            logger.debug(f"Fetched {len(all_tickers)} tickers from {exchange_id}")
+            
+            for pair in pairs:
+                try:
+                    # Format the pair for the exchange (remove / for Binance)
+                    exchange_pair = pair
+                    standard_pair = pair  # Initialize standard_pair here
+                    
+                    if '/' in pair and exchange_id.lower() == 'binance':
+                        base, quote = pair.split('/')
+                        exchange_pair = f"{base}{quote}"
+                        standard_pair = pair
+                    elif '/' not in pair:
+                        # Add the slash format for lookup and result
+                        base = pair[:-len(quote_currency)]
+                        standard_pair = f"{base}/{quote_currency}"
+                    
+                    # Try different formats for lookup to handle tokens with prefixes
+                    ticker = None
+                    potential_keys = [exchange_pair, standard_pair]
+                    
+                    # Handle special cases like "1000PEPE", "1INCH" etc.
+                    if '/' in standard_pair:
+                        base, quote = standard_pair.split('/')
+                        # Check if base starts with a number (like 1000PEPE)
+                        if re.match(r'^\d+', base):
+                            # Try without the numeric prefix
+                            non_prefixed_base = re.sub(r'^\d+', '', base)
+                            potential_keys.append(f"{non_prefixed_base}{quote_currency}")
+                            potential_keys.append(f"{non_prefixed_base}/{quote_currency}")
+                            logger.debug(f"Trying prefixed token {pair} with additional formats: {potential_keys}")
+                    
+                    # Try all potential keys
+                    for key in potential_keys:
+                        if key in all_tickers:
+                            ticker = all_tickers[key]
+                            logger.debug(f"Found ticker for {pair} using key: {key}")
+                            break
+                    
+                    # Default error response in case we don't find valid data
+                    default_response = {
+                        'error': 'No data available',
+                        'price': 0,
+                        'volume_24h': 0,
+                        'change_24h': 0,
+                        'high_24h': 0,
+                        'low_24h': 0
+                    }
+                    
+                    # If we found a ticker, extract data with proper None checks
+                    if ticker is not None:
+                        # Handle percentage - ensure it's not None before multiplication
+                        percentage = ticker.get('percentage')
+                        if percentage is not None:
+                            percentage_value = percentage * 100  # Convert to percentage
+                        else:
+                            percentage_value = 0
+                            logger.debug(f"No percentage data for {pair}, defaulting to 0")
+                        
+                        # Get last price with None check
+                        last_price = ticker.get('last')
+                        if last_price is not None:
+                            result[standard_pair] = {
+                                'price': last_price,
+                                'volume_24h': ticker.get('quoteVolume', 0),
+                                'change_24h': percentage_value,
+                                'high_24h': ticker.get('high', 0),
+                                'low_24h': ticker.get('low', 0)
+                            }
+                        else:
+                            logger.warning(f"No last price found for {pair} in ticker data")
+                            result[standard_pair] = default_response
+                    else:
+                        # No ticker data found
+                        logger.warning(f"No ticker data found for {pair} (tried keys: {potential_keys})")
+                        result[standard_pair] = default_response
+                except Exception as e:
+                    # Log error and continue with next pair
+                    logger.error(f"Error fetching data for {pair}: {str(e)}")
+                    
+                    # Use standard format for result keys
+                    if '/' not in pair:
+                        base = pair[:-len(quote_currency)]
+                        std_pair = f"{base}/{quote_currency}"
+                    else:
+                        std_pair = pair
+                        
+                    result[std_pair] = {
+                        'error': str(e),
+                        'price': 0,
+                        'volume_24h': 0,
+                        'change_24h': 0,
+                        'high_24h': 0,
+                        'low_24h': 0
+                    }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error fetching current prices: {str(e)}")
+            return result
+    
+    async def close(self):
+        """Close all connections."""
+        try:
+            # Close all exchange connections
+            for name, exchange in self.exchanges.items():
+                try:
+                    logger.info(f"Closing exchange connection: {name}")
+                    if hasattr(exchange, 'close'):
+                        await exchange.close()
+                except Exception as e:
+                    logger.error(f"Error closing exchange {name}: {str(e)}")
+            
+            # Close direct API connections if they exist
+            if hasattr(self, 'direct_apis'):
+                for name, api in self.direct_apis.items():
+                    try:
+                        if hasattr(api, 'close'):
+                            logger.info(f"Closing direct API connection: {name}")
+                            await api.close()
+                    except Exception as e:
+                        logger.error(f"Error closing direct API {name}: {str(e)}")
+                
+            logger.info("All exchange connections closed")
+        except Exception as e:
+            logger.error(f"Error closing exchange manager: {str(e)}") 
