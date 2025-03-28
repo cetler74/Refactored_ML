@@ -1,0 +1,60 @@
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.csv
+*.dat
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ML specific
+*.h5
+*.hdf5
+*.pkl
+*.model
+*.joblib
+*.pt
+*.pth
+*.onnx
+checkpoints/
+models/
+wandb/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+.DS_Store
