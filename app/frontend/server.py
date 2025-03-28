@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import logging
-import socket
 import os
-import signal
 import sys
 from pathlib import Path
 import traceback
@@ -11,135 +9,121 @@ from datetime import datetime, timedelta
 import json
 import uvicorn
 import contextlib
+import asyncio
+import socket
+import signal
+
+# Setup logging first, before any imports that might use it
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Define a global variable for the current directory
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Define a function to setup imports - this ensures proper error handling
+def setup_imports():
+    """Configure import paths based on the execution context"""
+    # Get current directory and possible root paths
+    current_file = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file)
+    parent_dir = os.path.dirname(current_dir)
+    project_root = os.path.dirname(parent_dir)
+    
+    # Try multiple approaches to find the correct import path
+    possible_roots = [
+        project_root,  # Standard project layout
+        parent_dir,    # If app is the project root
+        os.path.dirname(os.path.dirname(project_root))  # If running from a subdirectory
+    ]
+    
+    logger.info(f"Current file: {current_file}")
+    logger.info(f"Current directory: {current_dir}")
+    
+    # Add all possible roots to sys.path
+    for root in possible_roots:
+        if root not in sys.path:
+            sys.path.insert(0, root)
+            logger.info(f"Added {root} to sys.path")
+    
+    # Try importing using absolute imports
+    try:
+        logger.info("Attempting to import using absolute imports...")
+        from app.core.orchestrator import BotOrchestrator
+        from app.config.settings import Settings
+        from app.frontend.ml_metrics_helper import get_enhanced_ml_metrics
+        logger.info("Successfully imported using absolute imports")
+        return BotOrchestrator, Settings, get_enhanced_ml_metrics
+    except ImportError as e:
+        logger.warning(f"Absolute imports failed: {e}")
+        
+        # Try importing using relative imports
+        try:
+            logger.info("Attempting relative imports...")
+            # Add the parent directory to sys.path for relative imports
+            if parent_dir not in sys.path:
+                sys.path.insert(0, parent_dir)
+                
+            # Now try the imports
+            from core.orchestrator import BotOrchestrator
+            from config.settings import Settings
+            from frontend.ml_metrics_helper import get_enhanced_ml_metrics
+            logger.info("Successfully imported using relative imports")
+            return BotOrchestrator, Settings, get_enhanced_ml_metrics
+        except ImportError as e2:
+            logger.warning(f"Relative imports failed: {e2}")
+            
+            # Last resort - try direct imports from current directory
+            try:
+                logger.info("Attempting direct imports...")
+                sys.path.insert(0, current_dir)
+                import ml_metrics_helper
+                get_enhanced_ml_metrics = ml_metrics_helper.get_enhanced_ml_metrics
+                
+                sys.path.insert(0, os.path.join(parent_dir, "core"))
+                from orchestrator import BotOrchestrator
+                
+                sys.path.insert(0, os.path.join(parent_dir, "config"))
+                from settings import Settings
+                
+                logger.info("Successfully imported using direct imports")
+                return BotOrchestrator, Settings, get_enhanced_ml_metrics
+            except ImportError as e3:
+                logger.error(f"All import attempts failed: {e3}")
+                logger.error(f"Current sys.path: {sys.path}")
+                raise ImportError(f"Could not import required modules: {e}, {e2}, {e3}")
+
+# Import the required modules
+try:
+    BotOrchestrator, Settings, get_enhanced_ml_metrics = setup_imports()
+except ImportError as e:
+    logger.critical(f"FATAL: Could not import required modules: {e}")
+    sys.exit(1)
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-import asyncio
 
-# Add project root to path to resolve imports
-# First find the project root (2 levels up from this file)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-app_dir = os.path.dirname(current_dir)
-project_root = os.path.dirname(app_dir)
+# Store WebSocket connections
+connected_clients: List[WebSocket] = []
 
-# Add both the project root and app directory to sys.path
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-if app_dir not in sys.path:
-    sys.path.insert(0, app_dir)
-
-print(f"Python sys.path: {sys.path}")
-print(f"Current directory: {os.getcwd()}")
-
-try:
-    from app.core.orchestrator import BotOrchestrator
-    from app.config.settings import Settings
-    print("Successfully imported BotOrchestrator and Settings")
-except ImportError as e:
-    print(f"Failed to import from app.core: {e}")
-    print(f"Trying alternative import paths...")
-    try:
-        # Try alternative import paths
-        sys.path.append(os.path.join(project_root, "app"))
-        from core.orchestrator import BotOrchestrator
-        from config.settings import Settings
-        print("Successfully imported using alternative paths")
-    except ImportError as alt_e:
-        print(f"Alternative import failed: {alt_e}")
-        # Create minimal Settings if needed
-        print("Using mock classes for development")
-        class Settings:
-            def __init__(self):
-                self.config = {}
-                self.env = "development"
-                self.FRONTEND_PORT = 3001
-                self.enable_ml = True
-                self.db_connection_string = "sqlite:///trading_bot_dev.db"
-        
-        # Mock orchestrator
-        class BotOrchestrator:
-            def __init__(self, settings):
-                self.settings = settings
-                print("Initialized mock BotOrchestrator")
-                
-            async def stop(self):
-                print("Stopping mock BotOrchestrator")
-                
-            async def get_portfolio(self):
-                # Return simulated portfolio data
-                now = datetime.now()
-                return {
-                    "total_balance_usdc": 10000.0,
-                    "available_usdc": 9850.0,
-                    "open_positions": {
-                        "BTC/USDT": {
-                            "trade_id": "sim_1742934328887_BTC/USDT_buy",
-                            "symbol": "BTC/USDT",
-                            "entry_price": 88277.08,
-                            "current_price": 88975.23,
-                            "amount": 0.001,
-                            "trade_type": "buy",
-                            "timestamp": (now - timedelta(days=2)).isoformat(),
-                            "unrealized_pnl": 0.698,
-                            "unrealized_pnl_pct": 0.79
-                        }
-                    }
-                }
-
-# Import helper for ML metrics
-try:
-    # First try to import from the full app path
-    try:
-        from app.frontend.ml_metrics_helper import get_enhanced_ml_metrics
-        print("Imported ML metrics helper from app.frontend")
-    except ImportError:
-        # Then try relative import
-        from ml_metrics_helper import get_enhanced_ml_metrics
-        print("Imported ML metrics helper from current directory")
-except ImportError as e:
-    print(f"Could not import ML metrics helper: {e}")
-    # Define a fallback ML metrics function
-    def get_enhanced_ml_metrics():
-        """Fallback ML metrics function"""
-        now = datetime.now()
-        return {
-            "status": "available",
-            "message": "Using mock ML metrics",
-            "accuracy": 0.78,
-            "precision": 0.75,
-            "recall": 0.77,
-            "f1_score": 0.76,
-            "timestamp": now.isoformat(),
-            "models": [
-                {
-                    "symbol": "BTC/USDT",
-                    "model_type": "ensemble",
-                    "status": "trained",
-                    "accuracy": 0.78,
-                    "last_training": (now - timedelta(days=1)).isoformat(),
-                    "next_training": (now + timedelta(hours=23)).isoformat(),
-                    "samples": 1500
-                }
-            ]
-        }
-
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Create FastAPI app
-app = FastAPI()
-# Add lifespan context manager
+# Create FastAPI app with lifespan
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Lifespan context manager for FastAPI app initialization and cleanup"""
     # Startup logic
     try:
         # Initialize bot
         settings = Settings()
         app.bot = BotOrchestrator(settings)
         logger.info("Bot initialized")
+        
+        # Start the bot properly
+        await app.bot.start(mode="simulation")
+        logger.info("Bot started in simulation mode")
         
         # Start periodic data broadcast task
         data_broadcast_task = asyncio.create_task(periodic_data_broadcast())
@@ -150,7 +134,7 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         # Shutdown logic
-        if app.bot:
+        if hasattr(app, 'bot') and app.bot:
             try:
                 await app.bot.stop()
             except Exception as e:
@@ -171,17 +155,21 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
-# Add CORS middleware
+# Add CORS middleware - in production, restrict origins
+# In development mode, allow all origins
+is_dev_mode = os.environ.get("ENV", "development") == "development"
+origins = ["*"] if is_dev_mode else [
+    "https://yourdomain.com",  # Replace with actual frontend domain
+    "https://api.yourdomain.com",  # Replace with API domain if different
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
-# Store WebSocket connections
-connected_clients: List[WebSocket] = []
 
 # Initialize app state
 app.bot = None
@@ -206,83 +194,48 @@ async def broadcast_data(data, message_type="update"):
                 connected_clients.remove(client)
 
 async def get_portfolio_data() -> Dict[str, Any]:
-    """Get real-time portfolio data from bot."""
+    """Get portfolio data from bot, with proper error handling"""
     try:
         if not app.bot:
-            # Return simulated portfolio data when bot is not available
-            now = datetime.now()
-            start_time = now - timedelta(days=14, hours=6, minutes=42)  # Simulated trading start time
-            time_trading_ms = int((now - start_time).total_seconds() * 1000)
-            
-            # Create simulated positions
-            positions = {
-                "BTC/USDT": {
-                    "trade_id": "sim_1742934328887_BTC/USDT_buy",
-                    "symbol": "BTC/USDT",
-                    "entry_price": 88277.08,
-                    "current_price": 88975.23,
-                    "amount": 0.001,
-                    "side": None,  # Using trade_id to determine side
-                    "trade_type": "buy",
-                    "timestamp": (now - timedelta(days=2, hours=8)).isoformat(),
-                    "unrealized_pnl": 0.698,
-                    "unrealized_pnl_pct": 0.79,
-                    "size_invested": 88.28  # Entry price * amount
-                }
-            }
-            
-            # Calculate portfolio values
-            total_position_value = sum(pos["current_price"] * pos["amount"] for pos in positions.values())
-            total_balance = 10000.0  # Initial balance
-            in_orders = total_position_value
-            available_balance = total_balance - in_orders
-            
-            # Return portfolio data
+            logger.warning("Bot not initialized, returning empty portfolio data")
             return {
-                "total_balance_usdc": total_balance,
-                "available_usdc": available_balance,
-                "in_orders": in_orders,
-                "open_positions": positions,
-                "pnl_24h": 65.23,
-                "win_rate": 68.5,
-                "buy_trades_count": 1,
-                "sell_trades_count": 0,
-                "time_trading": time_trading_ms,
-                "trading_start_time": start_time.isoformat(),
-                "timestamp": now.isoformat(),
-                "total_profit": 342.78,
-                "total_profit_percentage": 3.42
+                "status": "unavailable",
+                "message": "Trading bot is not initialized",
+                "timestamp": datetime.now().isoformat()
             }
         
-        # Check if the bot has been properly initialized
-        if not hasattr(app.bot, 'balance_manager') or app.bot.balance_manager is None:
-            # Create a standard response to avoid triggering warnings
-            now = datetime.now()
-            logger.info("Using standard portfolio data in WebSocket - bot not fully initialized")
-            return {
-                "total_balance_usdc": 10000.00,
-                "available_usdc": 10000.00,
-                "allocated_balance": 0.00,
-                "total_positions_value": 0.00,
-                "open_positions": {},
-                "open_positions_count": 0,
-                "win_rate": 0.0,
-                "total_trades": 0,
-                "total_profit": 0.0,
-                "total_loss": 0.0,
-                "net_profit": 0.0,
-                "pnl_24h": 0.0,
-                "timestamp": now.isoformat()
-            }
-        
-        # Get real portfolio data from the bot
+        # Let the bot handle simulation/real data internally
         portfolio = await app.bot.get_portfolio()
+        
+        # Debug log to see the structure
+        logger.info(f"Portfolio data structure: {json.dumps(portfolio, default=str)}")
+        
+        # Convert field names to match frontend expectations if needed
+        if "total_balance_usdc" in portfolio and "total_balance" not in portfolio:
+            portfolio["total_balance"] = portfolio["total_balance_usdc"]
+        
+        if "available_usdc" in portfolio and "available_balance" not in portfolio:
+            portfolio["available_balance"] = portfolio["available_usdc"]
+            
+        if "open_positions" in portfolio and "positions" not in portfolio:
+            portfolio["positions"] = portfolio["open_positions"]
+        
+        # Additional debug: Log final keys
+        logger.info(f"Portfolio data keys after transformation: {sorted(portfolio.keys())}")
+        logger.info(f"Final portfolio data structure for frontend: {json.dumps({k: type(v).__name__ for k, v in portfolio.items()}, default=str)}")
+            
         return portfolio
         
     except Exception as e:
         logger.error(f"Error getting portfolio data: {str(e)}")
         traceback.print_exc()
-        return {"error": str(e)}
+        # Return structured error information
+        return {
+            "status": "error",
+            "message": f"Failed to retrieve portfolio data: {str(e)}",
+            "timestamp": datetime.now().isoformat(),
+            "error_type": type(e).__name__
+        }
 
 # API Endpoints
 @app.get("/health")
@@ -299,8 +252,83 @@ async def get_ml_metrics_endpoint():
         logger.error(f"Error getting ML metrics: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={"error": str(e)}
+            content={
+                "status": "error",
+                "message": f"Failed to retrieve ML metrics: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+                "error_type": type(e).__name__
+            }
         )
+
+# Alias the mock function to make intent clear
+from app.frontend.ml_metrics_helper import get_enhanced_ml_metrics as get_mock_ml_metrics
+
+# --- New function to get REAL ML metrics ---
+async def get_current_ml_metrics() -> Dict[str, Any]:
+    """Attempts to retrieve real-time metrics from the ML module."""
+    now_iso = datetime.now().isoformat()
+    
+    # Default response if ML is unavailable
+    ml_unavailable_response = {
+        "status": "unavailable",
+        "message": "ML module is disabled or not initialized.",
+        "accuracy": 0,
+        "precision": 0,
+        "recall": 0,
+        "f1_score": 0,
+        "timestamp": now_iso,
+        "models": [],
+        "training_status": {"in_progress": False, "current_operation": "Idle"},
+        "model_stats": {"trained": 0, "total": 0},
+        "prediction_stats": {"total": 0, "success_rate": 0},
+        "model_health": {"status": "unknown", "message": "ML module inactive."},
+        "last_training_cycle": None,
+        "next_training_cycle": None,
+        "training_frequency": "N/A",
+        "predictions": [],
+        "feature_importance": {}
+    }
+
+    if not app.bot or not hasattr(app.bot, 'ml_module') or not app.bot.ml_module:
+        logger.warning("ML module not available in BotOrchestrator.")
+        return ml_unavailable_response
+
+    # Check if the ML module has the required get_metrics method
+    if not hasattr(app.bot.ml_module, 'get_metrics'):
+        logger.error("ML module exists but lacks the 'get_metrics' method.")
+        # Return unavailable status, as we can't get real data
+        response = ml_unavailable_response.copy()
+        response["status"] = "error"
+        response["message"] = "ML module is missing the 'get_metrics' method."
+        response["model_health"]["status"] = "error"
+        response["model_health"]["message"] = "Interface mismatch: 'get_metrics' not found."
+        return response
+
+    try:
+        # Call the actual method on the ML module instance
+        metrics = await app.bot.ml_module.get_metrics()
+        if not metrics:
+             logger.warning("ML module get_metrics() returned empty data.")
+             # Fallback to unavailable status if method returns nothing useful
+             response = ml_unavailable_response.copy()
+             response["status"] = "nodata"
+             response["message"] = "ML module reported no metrics data available."
+             return response
+             
+        # Ensure basic structure compatibility (add more checks as needed)
+        metrics.setdefault("status", "available")
+        metrics.setdefault("timestamp", now_iso)
+        logger.info("Successfully retrieved real ML metrics.")
+        return metrics
+    except Exception as e:
+        logger.error(f"Error retrieving metrics from ML module: {e}", exc_info=True)
+        # Return error status
+        response = ml_unavailable_response.copy()
+        response["status"] = "error"
+        response["message"] = f"Failed to retrieve metrics from ML module: {str(e)}"
+        response["model_health"]["status"] = "error"
+        response["model_health"]["message"] = "Error during metrics retrieval."
+        return response
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -313,8 +341,8 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         # Send initial data
         try:
-            # Send ML status
-            ml_metrics = get_enhanced_ml_metrics()
+            # --- Use the new function for ML metrics ---
+            ml_metrics = await get_current_ml_metrics() 
             await websocket.send_json({
                 "type": "ml_metrics",
                 "data": ml_metrics,
@@ -323,6 +351,7 @@ async def websocket_endpoint(websocket: WebSocket):
             
             # Send portfolio data
             portfolio = await get_portfolio_data()
+            logger.info(f"DEBUG - Portfolio data being sent to client: {json.dumps(portfolio, default=str)}")
             await websocket.send_json({
                 "type": "portfolio",
                 "data": portfolio,
@@ -330,6 +359,12 @@ async def websocket_endpoint(websocket: WebSocket):
             })
         except Exception as e:
             logger.error(f"Error sending initial data: {e}")
+            # Send error message to client
+            await websocket.send_json({
+                "type": "error",
+                "message": f"Failed to load initial data: {str(e)}",
+                "timestamp": datetime.now().isoformat()
+            })
         
         # Keep connection alive and process messages
         while True:
@@ -352,31 +387,46 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/")
 async def get_root():
     """Serve the React app"""
-    return FileResponse('react-app/build/index.html')
+    index_path = os.path.join(CURRENT_DIR, 'react-app/build/index.html')
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    else:
+        logger.warning(f"Index file not found at {index_path}")
+        return {"status": "error", "message": "Frontend files not built"}
 
 # Serve static files from the React build directory
-try:
-    app.mount("/static", StaticFiles(directory="react-app/build/static"), name="static")
-    logger.info("Mounted static files directory")
-except Exception as e:
-    logger.warning(f"Could not mount static files directory: {e}")
+# Check if directory exists before mounting
+static_dir = os.path.join(CURRENT_DIR, "react-app/build/static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    logger.info(f"Mounted static files directory: {static_dir}")
+else:
+    logger.warning(f"Static files directory not found: {static_dir}")
 
 # Serve other static files from React build
 @app.get("/{path:path}")
 async def serve_react_assets(path: str):
-    file_path = f"react-app/build/{path}"
+    file_path = os.path.join(CURRENT_DIR, f"react-app/build/{path}")
     if os.path.exists(file_path):
         return FileResponse(file_path)
-    return FileResponse('react-app/build/index.html')
+    index_path = os.path.join(CURRENT_DIR, 'react-app/build/index.html')
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return JSONResponse(
+        status_code=404,
+        content={"status": "error", "message": "File not found"}
+    )
 
 # Background tasks
 async def periodic_data_broadcast():
     """Periodically broadcast data to all connected clients"""
+    BROADCAST_INTERVAL_SECONDS = 15
+    
     while True:
         try:
             if connected_clients:
-                # Get updated data
-                ml_metrics = get_enhanced_ml_metrics()
+                # --- Use the new function for ML metrics ---
+                ml_metrics = await get_current_ml_metrics() 
                 portfolio = await get_portfolio_data()
                 
                 # Broadcast to all clients
@@ -387,14 +437,13 @@ async def periodic_data_broadcast():
         except Exception as e:
             logger.error(f"Error in periodic broadcast: {e}")
         
-        # Sleep before next update
-        await asyncio.sleep(5)
+        await asyncio.sleep(BROADCAST_INTERVAL_SECONDS)
 
 # Run the server
 if __name__ == "__main__":
     # Get port from settings or use default
     settings = Settings()
-    port = getattr(settings, "FRONTEND_PORT", 3001)
+    port = getattr(settings, "FRONTEND_PORT", 3002)
     
     print(f"Starting FastAPI server on port {port}")
     uvicorn.run(app, host="0.0.0.0", port=port) 

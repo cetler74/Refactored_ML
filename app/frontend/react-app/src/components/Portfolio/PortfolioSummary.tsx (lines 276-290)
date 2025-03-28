@@ -1,0 +1,17 @@
+                    <TableBody>
+                      {Object.entries(positions).map(([symbol, position]: [string, any]) => (
+                        <TableRow key={symbol}>
+                          <TableCell>{symbol}</TableCell>
+                          <TableCell>{position.side || position.trade_type || 'Unknown'}</TableCell>
+                          <TableCell>{formatCurrency(position.entry_price || 0)}</TableCell>
+                          <TableCell>{formatCurrency(position.current_price || 0)}</TableCell>
+                          <TableCell>{position.amount || position.size || 0}</TableCell>
+                          <TableCell
+                            style={{ color: (position.unrealized_pnl || 0) >= 0 ? 'green' : 'red' }}
+                          >
+                            {formatCurrency(position.unrealized_pnl || 0)} ({formatPercentage(position.unrealized_pnl_pct || 0)})
+                          </TableCell>
+                          <TableCell>{formatDateTime(position.open_time || position.timestamp || '')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody> 

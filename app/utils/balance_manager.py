@@ -48,36 +48,83 @@ class BalanceManager:
         logger.info(f"Balance manager initialized in {mode} mode")
     
     async def initialize(self):
-        """Initialize balances from exchange or simulation settings."""
+        """Initialize balances from exchange or simulation settings, prioritizing DB in simulation."""
         try:
+            initial_balance = 0.0 # Default initialization
+
             if self.mode == AppMode.SIMULATION:
-                # Use simulated balance from settings - use MAX_POSITION_SIZE_USD instead of max_position_size_usd
-                initial_balance = self.settings.INITIAL_BALANCE
+                db_balance_fetched = False
+                # --- Attempt to fetch from DB first ---
+                if self.db_manager and hasattr(self.db_manager, 'balance_repository'):
+                    try:
+                        self.logger.info("Simulation mode: Attempting to initialize balance from database.")
+                        # Fetch the most recent balance entry
+                        balance_history = await self.db_manager.balance_repository.get_balance_history(limit=1) 
+                        if balance_history and len(balance_history) > 0:
+                            latest_balance_record = balance_history[0] # Get the latest record
+                            initial_balance = latest_balance_record.get('balance', 0.0)
+                            if initial_balance > 0:
+                                db_balance_fetched = True
+                                self.logger.info(f"Initialized balance from database: {initial_balance} USDC")
+                            else:
+                                self.logger.warning("Database balance record found but value is zero or invalid.")
+                        else:
+                            self.logger.info("No balance history found in database.")
+                    except Exception as db_err:
+                        self.logger.error(f"Error fetching balance from database during init: {db_err}")
+                
+                # --- Fallback to settings if DB fetch failed ---
+                if not db_balance_fetched:
+                    initial_balance = self.settings.INITIAL_BALANCE # Use setting as fallback
+                    self.logger.info(f"Using fallback initial balance from settings: {initial_balance} USDC")
+                
+                # --- Set the balance ---
                 self.balances["USDC"] = {
                     "free": initial_balance,
                     "used": 0.0,
                     "total": initial_balance
                 }
-                logger.info(f"Initialized simulated balance: {initial_balance} USDC")
-            else:
+                # Log the final initialized value
+                logger.info(f"Balance Manager initialized with: {initial_balance} USDC (Free: {self.balances['USDC']['free']})")
+
+            else: # Live mode
                 # Fetch real balance from exchange
-                exchange_balances = await self.exchange_manager.fetch_balance("binance")
-                
-                if "USDC" in exchange_balances.get("free", {}):
-                    self.balances["USDC"] = {
-                        "free": exchange_balances["free"]["USDC"],
-                        "used": exchange_balances["used"]["USDC"],
-                        "total": exchange_balances["total"]["USDC"]
-                    }
-                    logger.info(f"Initialized real balance: {self.balances['USDC']['total']} USDC")
+                self.logger.info("Live mode: Initializing balance from exchange.")
+                exchange_balances = await self.exchange_manager.fetch_balance("binance") # Assuming binance or get dynamically
+
+                if exchange_balances and "USDC" in exchange_balances.get("total", {}): # Check total exists
+                     # Use total from exchange as the starting point
+                     initial_balance = exchange_balances["total"]["USDC"]
+                     self.balances["USDC"] = {
+                         "free": exchange_balances.get("free", {}).get("USDC", 0.0),
+                         "used": exchange_balances.get("used", {}).get("USDC", 0.0),
+                         "total": initial_balance
+                     }
+                     self.logger.info(f"Initialized real balance: {initial_balance} USDC (Free: {self.balances['USDC']['free']})")
                 else:
-                    logger.warning("No USDC balance found on exchange")
-            
-            # Load open positions from database if available
-            if self.db_manager:
-                # This would be implemented to load open positions from the database
-                pass
-            
+                     logger.warning("No valid USDC balance found on exchange. Initializing balance to 0.")
+                     # Keep default zero balance if exchange fetch fails
+                     self.balances["USDC"] = {"free": 0.0, "used": 0.0, "total": 0.0}
+
+
+            # Load open positions from database if available (remains the same)
+            if self.db_manager and hasattr(self.db_manager, 'trade_repository'):
+                 try:
+                      # Example: Fetch open positions and update 'used' balance accordingly
+                      open_positions = await self.db_manager.trade_repository.get_open_positions()
+                      used_balance = 0.0
+                      if open_positions:
+                           self.open_positions = open_positions # Store loaded positions
+                           for pos in open_positions.values():
+                                used_balance += pos.get('cost', 0.0) # Assuming 'cost' is stored
+                           self.balances["USDC"]["used"] = used_balance
+                           # Recalculate free balance after loading positions
+                           self.balances["USDC"]["free"] = self.balances["USDC"]["total"] - used_balance
+                      self.logger.info(f"Loaded {len(open_positions)} open positions from DB. Updated used balance.")
+                 except Exception as pos_err:
+                      self.logger.error(f"Error loading open positions from DB: {pos_err}")
+
+
             return True
         except Exception as e:
             logger.exception(f"Error initializing balance manager: {str(e)}")
@@ -304,10 +351,39 @@ class BalanceManager:
             await self.update_balances()
             
             # Store the trade in the database if available
-            if self.db_manager:
-                # This would be implemented to store the trade in the database
-                pass
-            
+            if self.db_manager and hasattr(self.db_manager, 'trade_repository'):
+                try:
+                    # Prepare the data for the database record
+                    trade_data = {
+                        "trade_id": self.open_positions[symbol].get("trade_id", order.get("id")), # Use consistent ID
+                        "exchange": self.settings.DEFAULT_EXCHANGE, # Or get from signal/order
+                        "symbol": symbol,
+                        "order_id": self.open_positions[symbol].get("order_id"),
+                        "status": "open", # Mark as open initially
+                        "trade_type": trade_type, # 'buy' or 'sell'
+                        "amount": asset_amount,
+                        "entry_price": entry_price,
+                        "cost": position_size_usdc, # The total cost of the position
+                        "entry_time": self.open_positions[symbol].get("entry_time").isoformat(), # Ensure ISO format string
+                        "stop_loss": self.open_positions[symbol].get("stop_loss"),
+                        "take_profit": self.open_positions[symbol].get("take_profit"),
+                        "strategy": self.open_positions[symbol].get("strategy"),
+                        "timeframe": self.open_positions[symbol].get("timeframe"),
+                        # Add other relevant fields your DB schema requires
+                    }
+                    # Call the repository method to add the trade
+                    await self.db_manager.trade_repository.add_trade(trade_data)
+                    logger.info(f"Successfully saved open trade {trade_data['trade_id']} for {symbol} to database.")
+                except Exception as db_err:
+                    # Log the error, but don't necessarily fail the whole open_position
+                    # The position exists internally, but dashboard won't see it until DB is fixed
+                    logger.error(f"Failed to save open trade for {symbol} to database: {db_err}", exc_info=True)
+            elif not self.db_manager:
+                 logger.warning("db_manager not available, cannot save trade to database.")
+            elif not hasattr(self.db_manager, 'trade_repository'):
+                 logger.warning("db_manager does not have 'trade_repository', cannot save trade to database.")
+
+
             logger.info(f"Opened {trade_type} position for {symbol}: {asset_amount} @ {entry_price}")
             
             return {

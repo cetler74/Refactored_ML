@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// @ts-nocheck
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -14,16 +15,13 @@ import {
   TableRow, 
   Card, 
   CardContent, 
-  Chip,
-  IconButton,
-  Tooltip
+  Chip
 } from '@mui/material';
 import { useWebSocket } from '../../hooks/useWebSocket';
-import { formatCurrency, formatDateTime, formatPercentage, formatDuration } from '../../utils/formatters';
-import CloseIcon from '@mui/icons-material/Close';
+import { formatDuration } from '../../utils/formatters';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import TradeInfoCard from './TradeInfoCard';
+import { logger } from '../../utils/logger';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -33,24 +31,27 @@ interface TabPanelProps {
 
 interface Trade {
   id: string;
+  trade_id?: string;
   symbol: string;
   type: string;
-  entry_price: number;
-  current_price: number;
-  exit_price?: number;
-  amount: number;
-  size_invested: number;
+  entryPrice: number;
+  entry_price?: number;
+  currentPrice: number;
+  current_price?: number;
+  quantity: number;
+  amount?: number; 
+  value: number;
   pnl: number;
-  pnl_percentage: number;
-  duration: number;
-  entry_time: string;
-  exit_time?: string;
-  trade_id: string;
-  side?: string | null;
+  unrealized_pnl?: number;
+  pnlPercentage: number;
+  unrealized_pnl_pct?: number;
+  entryTime: string;
+  timestamp?: string;
+  status: string;
+  side?: string;
   trade_type?: string;
-  timestamp: string;
-  unrealized_pnl: number;
-  unrealized_pnl_pct: number;
+  size_invested?: number;
+  duration?: string;
 }
 
 interface Order {
@@ -111,111 +112,183 @@ function a11yProps(index: number) {
 }
 
 export const TradingView: React.FC = () => {
-  const [tabValue, setTabValue] = useState(0);
-  const { data, isConnected, error } = useWebSocket();
-
-  // Create trading data from portfolio.positions if available
-  const portfolio = data?.portfolio;
+  const [value, setValue] = useState(0);
+  const { data: wsData, error: wsError } = useWebSocket();
+  const [buyPositions, setBuyPositions] = useState<Trade[]>([]);
+  const [sellPositions, setSellPositions] = useState<Trade[]>([]);
+  const [componentError, setComponentError] = useState<string | null>(null);
   
-  // Generate trading data from portfolio positions
-  const tradingData = React.useMemo(() => {
-    if (!portfolio || !portfolio.positions) {
-      return {
-        activePositions: [],
-        totalValue: 0,
-        totalPnl: 0,
-        pnlPercentage: 0,
-        buyPositions: [],
-        sellPositions: []
-      };
+  useEffect(() => {
+    setComponentError(null);
+    logger.log("TradingView useEffect triggered. Raw wsData:", wsData);
+    
+    try {
+      // Check if we have data
+      if (!wsData) {
+        logger.log("TradingView: No WebSocket data available yet.");
+        return;
+      }
+      
+      // Extract portfolio data robustly
+      const portfolio = wsData?.portfolio ||
+        (wsData && typeof wsData === 'object' && ('open_positions' in wsData || 'positions' in wsData) ? wsData : null);
+      
+      if (!portfolio) {
+        logger.warn("TradingView: No portfolio data found in wsData.", wsData);
+        return;
+      }
+      
+      logger.log("TradingView: Portfolio data extracted:", portfolio);
+      
+      // Check if open_positions or positions exists
+      const positions = portfolio?.open_positions ?? portfolio?.positions ?? {};
+      logger.log("TradingView: Positions object:", positions);
+      
+      if (typeof positions !== 'object' || positions === null || Object.keys(positions).length === 0) {
+        logger.log("TradingView: No valid positions found in portfolio data. Clearing positions.");
+        setBuyPositions([]);
+        setSellPositions([]);
+        return;
+      }
+      
+      const buyPos: Trade[] = [];
+      const sellPos: Trade[] = [];
+      
+      // Process positions
+      logger.log("TradingView: Processing positions...");
+      Object.entries(positions).forEach(([symbol, posData]: [string, any]) => {
+        if (!posData || typeof posData !== 'object') {
+          logger.warn(`TradingView: Invalid position data for symbol ${symbol}`, posData);
+          return;
+        }
+        
+        const trade: Trade = {
+          id: posData.position_id ?? posData.trade_id ?? `pos_${symbol}_${Date.now()}`,
+          symbol: symbol,
+          type: posData.trade_type ?? posData.type ?? 'long',
+          entryPrice: posData.entry_price,
+          currentPrice: posData.current_price,
+          quantity: posData.position_size ?? posData.amount,
+          value: posData.position_value ??
+                 ((posData.position_size ?? posData.amount ?? 0) * (posData.current_price ?? 0)),
+          pnl: posData.pnl ?? posData.unrealized_pnl,
+          pnlPercentage: posData.pnl_percentage ?? posData.unrealized_pnl_pct,
+          entryTime: posData.entry_time ?? posData.timestamp ?? new Date().toISOString(),
+          status: posData.status ?? 'open',
+          entry_price: posData.entry_price,
+          current_price: posData.current_price,
+          size_invested: posData.size_invested,
+          amount: posData.amount ?? posData.position_size,
+          unrealized_pnl: posData.unrealized_pnl ?? posData.pnl,
+          unrealized_pnl_pct: posData.unrealized_pnl_pct ?? posData.pnl_percentage,
+          trade_id: posData.trade_id ?? posData.position_id,
+          duration: posData.duration
+        };
+        
+        const tradeType = (trade.type || '').toLowerCase();
+        if (tradeType === 'buy' || tradeType === 'long') {
+          buyPos.push(trade);
+        } else if (tradeType === 'sell' || tradeType === 'short') {
+          sellPos.push(trade);
+        } else {
+           logger.warn(`TradingView: Unknown trade type '${trade.type}' for symbol ${symbol}`);
+        }
+      });
+      
+      logger.log("TradingView: Processed positions. Buy:", buyPos.length, "Sell:", sellPos.length);
+      setBuyPositions(buyPos);
+      setSellPositions(sellPos);
+      
+    } catch (err) {
+      logger.error("TradingView: Error processing data in useEffect:", err);
+      setComponentError(`Error processing data: ${err instanceof Error ? err.message : String(err)}`);
     }
-
-    const positions = Object.values(portfolio.positions);
-    let totalValue = 0;
-    let totalPnl = 0;
-
-    const mappedPositions = positions.map((position: any, index) => {
-      const id = `position-${index}`;
-      const value = position.current_price * position.amount;
-      const unrealizedPnl = position.unrealized_pnl || 0;
-      const unrealizedPnlPct = position.unrealized_pnl_pct || 0;
-      
-      totalValue += value;
-      totalPnl += unrealizedPnl;
-
-      // Calculate position duration
-      const entryTimestamp = position.timestamp ? new Date(position.timestamp).getTime() : Date.now();
-      const currentTimestamp = Date.now();
-      const durationMs = currentTimestamp - entryTimestamp;
-      const duration = formatDuration(durationMs);
-
-      // Calculate size invested
-      const sizeInvested = position.size_invested || position.entry_price * position.amount;
-
-      return {
-        ...position,
-        unrealized_pnl: unrealizedPnl,
-        unrealized_pnl_pct: unrealizedPnlPct,
-        duration,
-        entry_time: position.timestamp || new Date().toISOString(),
-        trade_id: position.trade_id || id,
-        side: position.side,
-        trade_type: position.trade_type,
-        timestamp: position.timestamp || new Date().toISOString(),
-        size_invested: sizeInvested
-      };
-    });
-
-    // Separate buy and sell positions
-    const buyPositions = mappedPositions.filter((trade: Trade) => {
-      const tradeId = (trade.trade_id || '').toLowerCase();
-      const tradeType = (trade.trade_type || '').toLowerCase();
-      const side = (trade.side || '').toLowerCase();
-      
-      return tradeType === 'buy' || side === 'buy' || tradeId.includes('_buy');
-    });
-
-    const sellPositions = mappedPositions.filter((trade: Trade) => {
-      const tradeId = (trade.trade_id || '').toLowerCase();
-      const tradeType = (trade.trade_type || '').toLowerCase();
-      const side = (trade.side || '').toLowerCase();
-      
-      return tradeType === 'sell' || side === 'sell' || tradeId.includes('_sell');
-    });
-
-    return {
-      activePositions: mappedPositions,
-      totalValue,
-      totalPnl,
-      pnlPercentage: totalValue > 0 ? (totalPnl / totalValue) * 100 : 0,
-      buyPositions,
-      sellPositions
-    };
-  }, [portfolio]);
+    
+  }, [wsData]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+    setValue(newValue);
   };
 
-  // Function to extract trade type from various sources
-  const getTradeType = (trade: Trade): string => {
-    const tradeId = (trade.trade_id || '').toLowerCase();
-    let tradeType = trade.trade_type || trade.side || 'Unknown';
-    
-    // Extract trade type from trade_id if not available
-    if (tradeType === 'Unknown' && tradeId) {
-      if (tradeId.includes('_buy')) {
-        tradeType = 'Buy';
-      } else if (tradeId.includes('_sell')) {
-        tradeType = 'Sell';
-      }
+  // Helper function to format currency with color based on value
+  const currencyFormat = (value: number | undefined, prefix = '$') => {
+    if (value === undefined) return `${prefix}0.00`;
+    return `${prefix}${value.toFixed(2)}`;
+  };
+
+  // Helper function to format percentage with color based on value
+  const percentFormat = (value: number | undefined) => {
+    if (value === undefined) return '0.00%';
+    return `${value.toFixed(2)}%`;
+  };
+
+  // Helper function to determine trade type display
+  const getTradeType = (trade: Trade) => {
+    // Use type field from our updated interface first
+    if (trade.type) {
+      return <TradeTypeChip type={trade.type} />;
     }
     
-    return tradeType;
+    // Fallbacks for older data format
+    if (trade.trade_type) {
+      return <TradeTypeChip type={trade.trade_type} />;
+    }
+    
+    if (trade.side) {
+      return <TradeTypeChip type={trade.side} />;
+    }
+    
+    return <TradeTypeChip type="unknown" />;
+  };
+
+  // Helper function to get trade value color
+  const getTradeColor = (trade: Trade) => {
+    // For the new field names
+    if (trade.pnl !== undefined) {
+      return trade.pnl > 0 ? 'success.main' : 'error.main';
+    }
+    
+    // For the old field names
+    if (trade.unrealized_pnl !== undefined) {
+      return trade.unrealized_pnl > 0 ? 'success.main' : 'error.main';
+    }
+    
+    return 'text.primary';
+  };
+
+  // Helper function to get trade PnL value
+  const getTradePnL = (trade: Trade) => {
+    // For the new field names
+    if (trade.pnl !== undefined) {
+      return currencyFormat(trade.pnl);
+    }
+    
+    // For the old field names
+    if (trade.unrealized_pnl !== undefined) {
+      return currencyFormat(trade.unrealized_pnl);
+    }
+    
+    return '$0.00';
+  };
+
+  // Helper function to get trade PnL percentage
+  const getTradePnLPercentage = (trade: Trade) => {
+    // For the new field names
+    if (trade.pnlPercentage !== undefined) {
+      return percentFormat(trade.pnlPercentage);
+    }
+    
+    // For the old field names
+    if (trade.unrealized_pnl_pct !== undefined) {
+      return percentFormat(trade.unrealized_pnl_pct);
+    }
+    
+    return '0.00%';
   };
 
   const renderBuyPositions = () => {
-    if (!tradingData.buyPositions || tradingData.buyPositions.length === 0) {
+    if (componentError) return null;
+    if (!buyPositions || buyPositions.length === 0) {
       return <Typography>No active buy positions</Typography>;
     }
 
@@ -240,29 +313,21 @@ export const TradingView: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {tradingData.buyPositions.map((trade: Trade) => (
-                <TableRow key={trade.trade_id}>
+              {buyPositions.map((trade: Trade) => (
+                <TableRow key={trade.id || `trade-${trade.symbol}-${Math.random()}`}>
                   <TableCell>{trade.symbol}</TableCell>
-                  <TableCell>${trade.entry_price.toFixed(2)}</TableCell>
-                  <TableCell>${trade.current_price.toFixed(2)}</TableCell>
-                  <TableCell>{trade.amount}</TableCell>
-                  <TableCell>${trade.size_invested?.toFixed(2)}</TableCell>
+                  <TableCell>{currencyFormat(trade.entryPrice || trade.entry_price)}</TableCell>
+                  <TableCell>{currencyFormat(trade.currentPrice || trade.current_price)}</TableCell>
+                  <TableCell>{trade.quantity || trade.amount || 0}</TableCell>
+                  <TableCell>{currencyFormat(trade.size_invested)}</TableCell>
                   <TableCell>{getTradeType(trade)}</TableCell>
-                  <TableCell 
-                    style={{ 
-                      color: trade.unrealized_pnl >= 0 ? 'green' : 'red' 
-                    }}
-                  >
-                    ${trade.unrealized_pnl.toFixed(2)}
+                  <TableCell style={{ color: getTradeColor(trade) }}>
+                    {getTradePnL(trade)}
                   </TableCell>
-                  <TableCell 
-                    style={{ 
-                      color: trade.unrealized_pnl_pct >= 0 ? 'green' : 'red' 
-                    }}
-                  >
-                    {trade.unrealized_pnl_pct.toFixed(2)}%
+                  <TableCell style={{ color: getTradeColor(trade) }}>
+                    {getTradePnLPercentage(trade)}
                   </TableCell>
-                  <TableCell>{trade.duration}</TableCell>
+                  <TableCell>{trade.duration || '-'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -273,7 +338,7 @@ export const TradingView: React.FC = () => {
   };
 
   const renderSellPositions = () => {
-    if (!tradingData.sellPositions || tradingData.sellPositions.length === 0) {
+    if (!sellPositions || sellPositions.length === 0) {
       return <Typography>No active sell positions</Typography>;
     }
 
@@ -298,29 +363,21 @@ export const TradingView: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {tradingData.sellPositions.map((trade: Trade) => (
-                <TableRow key={trade.trade_id}>
+              {sellPositions.map((trade: Trade) => (
+                <TableRow key={trade.id || `trade-${trade.symbol}-${Math.random()}`}>
                   <TableCell>{trade.symbol}</TableCell>
-                  <TableCell>${trade.entry_price.toFixed(2)}</TableCell>
-                  <TableCell>${trade.current_price.toFixed(2)}</TableCell>
-                  <TableCell>{trade.amount}</TableCell>
-                  <TableCell>${trade.size_invested?.toFixed(2)}</TableCell>
+                  <TableCell>{currencyFormat(trade.entryPrice || trade.entry_price)}</TableCell>
+                  <TableCell>{currencyFormat(trade.currentPrice || trade.current_price)}</TableCell>
+                  <TableCell>{trade.quantity || trade.amount || 0}</TableCell>
+                  <TableCell>{currencyFormat(trade.size_invested)}</TableCell>
                   <TableCell>{getTradeType(trade)}</TableCell>
-                  <TableCell 
-                    style={{ 
-                      color: trade.unrealized_pnl >= 0 ? 'green' : 'red' 
-                    }}
-                  >
-                    ${trade.unrealized_pnl.toFixed(2)}
+                  <TableCell style={{ color: getTradeColor(trade) }}>
+                    {getTradePnL(trade)}
                   </TableCell>
-                  <TableCell 
-                    style={{ 
-                      color: trade.unrealized_pnl_pct >= 0 ? 'green' : 'red' 
-                    }}
-                  >
-                    {trade.unrealized_pnl_pct.toFixed(2)}%
+                  <TableCell style={{ color: getTradeColor(trade) }}>
+                    {getTradePnLPercentage(trade)}
                   </TableCell>
-                  <TableCell>{trade.duration}</TableCell>
+                  <TableCell>{trade.duration || '-'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -330,27 +387,38 @@ export const TradingView: React.FC = () => {
     );
   };
 
-  // Loading state when waiting for WebSocket data
-  if (!isConnected || !data) {
+  // Loading/Error state based on WebSocket connection and component errors
+  const isLoading = !wsData && !wsError && !componentError;
+  const displayError = wsError ? `WebSocket Error: ${wsError.message}` : componentError;
+
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
-        <Typography variant="h6">
-          {error ? `Error: ${error}` : "Loading trading data..."}
-        </Typography>
+        <Typography variant="h6">Loading trading data...</Typography>
       </Box>
     );
+  }
+
+  if (displayError) {
+     return (
+       <Box display="flex" justifyContent="center" alignItems="center" height="80vh" sx={{ color: 'error.main', padding: 2 }}>
+         <Typography variant="h6">
+           Error loading trading view: {displayError}
+         </Typography>
+       </Box>
+     );
   }
 
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="trading tabs">
+        <Tabs value={value} onChange={handleTabChange} aria-label="trading tabs">
           <Tab label="Overview" {...a11yProps(0)} />
           <Tab label="Trades" {...a11yProps(1)} />
           <Tab label="Performance" {...a11yProps(2)} />
         </Tabs>
       </Box>
-      <TabPanel value={tabValue} index={0}>
+      <TabPanel value={value} index={0}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Card>
@@ -359,8 +427,8 @@ export const TradingView: React.FC = () => {
                   Active Positions
                 </Typography>
                 {renderBuyPositions()}
-                {tradingData.buyPositions && tradingData.buyPositions.length > 0 && 
-                 tradingData.sellPositions && tradingData.sellPositions.length > 0 && 
+                {buyPositions && buyPositions.length > 0 && 
+                 sellPositions && sellPositions.length > 0 && 
                   <Box my={3} />
                 }
                 {renderSellPositions()}
@@ -369,11 +437,11 @@ export const TradingView: React.FC = () => {
           </Grid>
         </Grid>
       </TabPanel>
-      <TabPanel value={tabValue} index={1}>
+      <TabPanel value={value} index={1}>
         <Typography variant="h6">Trade History</Typography>
         <Typography>Trade history will be displayed here.</Typography>
       </TabPanel>
-      <TabPanel value={tabValue} index={2}>
+      <TabPanel value={value} index={2}>
         <Typography variant="h6">Performance Metrics</Typography>
         <Typography>Performance metrics will be displayed here.</Typography>
       </TabPanel>

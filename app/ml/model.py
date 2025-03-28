@@ -216,8 +216,28 @@ class TFTLightningModule(pl.LightningModule):
 class MLModule:
     # ... (Keep __init__ and helper methods like _save/load_tft_config, _get_device, tft_config_for_init, _load_models from previous response) ...
     def __init__(self, settings: Any, db_manager=None):
-        # ... (init logic from previous response, including TFT config handling) ...
-        pass
+        self.settings = settings
+        self.db_manager = db_manager
+        self.logger = logging.getLogger(__name__)
+        self.device = self._get_device()
+        self.models: Dict[str, Any] = {"forest": None, "lstm": None, "tft": None}
+        self.scalers: Dict[str, StandardScaler] = {}
+        self.label_encoders: Dict[str, LabelEncoder] = {} # For categorical features if needed
+        self.tft_config_path = os.path.join(settings.MODEL_DIR, "tft_config.json")
+        self.tft_config: Dict[str, Any] = self._load_tft_config()
+        self._load_models() # Load existing models on init
+
+        # --- Placeholder attributes for metrics ---
+        self._last_training_time: Optional[datetime] = None
+        self._training_state: Dict[str, Any] = {"in_progress": False, "current_operation": "Idle", "progress": 0.0, "eta": "N/A"}
+        self._model_status: Dict[str, Dict] = {}
+        self._prediction_stats: Dict[str, Any] = {"total": 0, "success_rate": 0.0, "avg_confidence": 0.0, "signals_generated": 0}
+        self._recent_predictions: List[Dict] = []
+        self._feature_importance: Dict[str, float] = {}
+        self._active_ml_pairs: List[str] = [] # TODO: Populate this based on loaded/trained models
+
+        # Example: Initialize performance tracker if you have one
+        # self.performance_tracker = ModelPerformanceTracker(...)
 
     def _save_tft_config(self):
         # ... (implementation from previous response) ...
@@ -357,5 +377,193 @@ class MLModule:
     def _validate_model_data(self, features_df: pd.DataFrame, targets_df: pd.DataFrame) -> Dict[str, Any]:
         # ... (Implementation from previous response - basic check) ...
         pass
+
+    # --- REFINED get_metrics Method ---
+    async def get_metrics(self) -> Dict[str, Any]:
+        """
+        Gathers and returns the current state and performance metrics of the ML module.
+        Provides real data to the dashboard. Assumes internal state tracking.
+        """
+        self.logger.debug("Gathering ML metrics...")
+        now = datetime.now()
+        now_iso = now.isoformat()
+
+        # --- Data Gathering (Refined Placeholders - Connect to actual tracking) ---
+
+        # 1. Overall Health & Status
+        # Check if core models defined in self.models are loaded
+        loaded_models_count = sum(1 for model in self.models.values() if model is not None)
+        total_core_models = len(self.models)
+        health_status = "unknown"
+        health_message = "Health status undetermined."
+
+        if loaded_models_count == total_core_models:
+            # TODO: Add more checks here - e.g., check age of models, last error, performance thresholds
+            if self._model_status: # Check if any performance metrics exist
+                 health_status = "available" # Consider 'healthy' if metrics meet criteria
+                 health_message = f"{loaded_models_count}/{total_core_models} core models loaded. Performance tracked."
+            else:
+                 health_status = "available"
+                 health_message = f"{loaded_models_count}/{total_core_models} core models loaded. Performance metrics not yet available."
+        elif loaded_models_count > 0:
+            health_status = "degraded"
+            health_message = f"Only {loaded_models_count}/{total_core_models} core models loaded."
+        else:
+            health_status = "unavailable"
+            health_message = "No core ML models are loaded."
+
+        if self._training_state.get("in_progress"):
+            health_status = "training"
+            health_message = f"Training in progress: {self._training_state.get('current_operation', '')}"
+
+        # 2. Model Specific Info
+        # Assumes self._model_status is populated correctly during/after training
+        models_info = []
+        # Add info based on self._model_status
+        for model_key, status_data in self._model_status.items():
+             # model_key could be 'forest', 'lstm', or something like 'tft_BTC/USDT'
+             model_type = status_data.get("model_type", model_key.split('_')[0]) # Guess type if needed
+             symbol = status_data.get("symbol", model_key if '/' in model_key else model_type.upper()) # Guess symbol
+             models_info.append({
+                 "symbol": symbol,
+                 "model_type": model_type,
+                 "status": status_data.get("status", "trained"), # Assumes status is tracked
+                 "accuracy": status_data.get("accuracy", 0.0),
+                 "last_training": status_data.get("last_training"), # Assumes ISO string format
+                 "next_training": None, # TODO: Calculate next training time
+                 "samples": status_data.get("samples", 0)
+             })
+        # Add info for core models defined but perhaps not yet tracked in _model_status
+        tracked_types = {info['model_type'] for info in models_info}
+        for core_type, core_instance in self.models.items():
+             if core_type not in tracked_types:
+                 models_info.append({
+                      "symbol": core_type.upper(), "model_type": core_type,
+                      "status": "loaded" if core_instance else "not_loaded",
+                      "accuracy": 0.0, "last_training": None, "next_training": None, "samples": 0
+                 })
+
+
+        # 3. Training Status
+        # Assumes self._training_state is updated by the training process
+        current_training_status = self._training_state
+
+        # 4. Model Stats (Counts)
+        # Use models_info list derived above
+        trained_count = sum(1 for info in models_info if info.get('status') == 'trained')
+        loaded_count = sum(1 for info in models_info if info.get('status') not in ['not_loaded', 'error'])
+        # TODO: Refine total_managed based on actual scope (active pairs?)
+        total_managed = len(self._active_ml_pairs) if self._active_ml_pairs else len(self.models)
+
+
+        # 5. Prediction Stats
+        # Assumes self._prediction_stats is updated by make_predictions
+        current_prediction_stats = self._prediction_stats
+
+        # 6. Overall Performance Metrics
+        # Example: Calculate average accuracy from tracked models or use a specific ensemble metric
+        accuracies = [info['accuracy'] for info in models_info if info.get('status') == 'trained' and info.get('accuracy') is not None]
+        overall_accuracy = sum(accuracies) / len(accuracies) if accuracies else 0.0
+        # TODO: Calculate or retrieve overall precision, recall, f1 similarly
+        overall_precision = self._model_status.get("ensemble", {}).get("precision", 0.0) # Placeholder
+        overall_recall = self._model_status.get("ensemble", {}).get("recall", 0.0)     # Placeholder
+        overall_f1 = self._model_status.get("ensemble", {}).get("f1", 0.0)         # Placeholder
+
+        # 7. Recent Predictions
+        # Assumes self._recent_predictions list (fixed size?) is updated by make_predictions
+        recent_predictions_data = self._recent_predictions # Use the tracked list directly
+
+        # 8. Feature Importance
+        # Assumes self._feature_importance is updated when calculated (e.g., via SHAP)
+        latest_feature_importance = self._feature_importance
+
+        # --- Construct the dictionary ---
+        metrics_data = {
+            "status": health_status,
+            "message": health_message,
+            "accuracy": overall_accuracy,
+            "precision": overall_precision,
+            "recall": overall_recall,
+            "f1_score": overall_f1,
+            "timestamp": now_iso,
+            "models": models_info,
+            "training_status": current_training_status,
+            "model_stats": {"trained": trained_count, "total": total_managed, "loaded": loaded_count},
+            "prediction_stats": current_prediction_stats,
+            "model_health": {"status": health_status, "message": health_message},
+            "last_training_cycle": self._last_training_time.isoformat() if self._last_training_time else None,
+            "next_training_cycle": None, # TODO: Calculate next scheduled training
+            "training_frequency": getattr(self.settings, 'TRAINING_FREQUENCY', "Not Set"),
+            "predictions": recent_predictions_data,
+            "feature_importance": latest_feature_importance
+        }
+
+        self.logger.info(f"Returning ML metrics: Status '{metrics_data.get('status')}', Models: {len(metrics_data.get('models',[]))}")
+        return metrics_data
+
+    # --- IMPORTANT: Ensure other methods update the metrics attributes ---
+
+    async def train_models(self, market_data_dict: Dict[str, pd.DataFrame], active_pairs: List[str] = None) -> Dict[str, Any]:
+        # ... existing training logic ...
+        try:
+            self._training_state = {"in_progress": True, "current_operation": "Starting training", "progress": 0.0}
+            # ... perform training ...
+            results = {} # Assume this holds metrics like {'accuracy': 0.8, 'precision': ..., 'model_type': 'forest', 'symbol': 'ALL', 'samples': 1000}
+
+            # --- TODO: Update internal state after training ---
+            self._last_training_time = datetime.now()
+            model_key = results.get('symbol', results.get('model_type', 'unknown')) # Define how you key the status
+            self._model_status[model_key] = {
+                "accuracy": results.get('accuracy'),
+                "precision": results.get('precision'),
+                "recall": results.get('recall'),
+                "f1": results.get('f1_score'),
+                "last_training": self._last_training_time.isoformat(),
+                "status": "trained",
+                "samples": results.get('samples'),
+                "symbol": results.get('symbol'),
+                "model_type": results.get('model_type')
+            }
+            # Update active pairs if applicable
+            # self._active_ml_pairs = active_pairs or []
+            self._training_state = {"in_progress": False, "current_operation": "Idle", "progress": 1.0}
+            return results # Or whatever your train_models returns
+        except Exception as e:
+             self.logger.error(f"Error during model training: {e}", exc_info=True)
+             self._training_state = {"in_progress": False, "current_operation": f"Error: {e}", "progress": 0.0}
+             # Optionally update model status to 'error'
+             raise # Re-raise the exception or handle appropriately
+        finally:
+             # Ensure training state is reset even if errors occur elsewhere
+             if self._training_state.get("in_progress"):
+                  self._training_state = {"in_progress": False, "current_operation": "Finished (check logs for details)", "progress": 1.0}
+
+
+    async def make_predictions(self, features_df: pd.DataFrame) -> Dict[str, Any]:
+        # ... existing prediction logic ...
+        predictions_result = {} # Assume this holds {'symbol': ..., 'prediction': ..., 'confidence': ...}
+
+        # --- TODO: Update internal state after prediction ---
+        now = datetime.now()
+        if predictions_result:
+             self._prediction_stats["total"] = self._prediction_stats.get("total", 0) + 1
+             # TODO: Update success_rate (requires knowing if prediction was correct later)
+             # TODO: Update avg_confidence
+             if predictions_result.get('prediction') in ['buy', 'sell']: # Assuming these are signal values
+                 self._prediction_stats["signals_generated"] = self._prediction_stats.get("signals_generated", 0) + 1
+
+             # Add to recent predictions (e.g., keep last 20)
+             prediction_entry = {
+                 "timestamp": now.isoformat(),
+                 "symbol": predictions_result.get("symbol"),
+                 "prediction": predictions_result.get("prediction"),
+                 "confidence": predictions_result.get("confidence")
+             }
+             self._recent_predictions.append(prediction_entry)
+             self._recent_predictions = self._recent_predictions[-20:] # Keep only the last 20
+
+        return predictions_result # Or whatever make_predictions returns
+
+    # ... (Rest of the existing MLModule methods) ...
 
 # --- End of MLModule class ---

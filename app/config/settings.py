@@ -149,6 +149,8 @@ class Settings(BaseSettings):
     binance_config: Optional[BinanceConfig] = None
     cryptocom_config: Optional[CryptocomConfig] = None
 
+    MODEL_DIR: str = "./models"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
